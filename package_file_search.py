@@ -83,12 +83,14 @@ Example Commands:
 
 import sublime
 import sublime_plugin
-from os.path import join, basename, exists
+from os.path import join, basename, exists, isdir, dirname
+from os import listdir
 import re
 import zipfile
 import tempfile
 import shutil
 from .lib.package_search import PackageSearch, sublime_package_paths
+from .lib import package_search as ps
 
 
 def get_encoding(view):
@@ -124,6 +126,70 @@ class WriteArchivedPackageContentCommand(sublime_plugin.TextCommand):
             sels.add(0)
             cls.bfr = None
             self.view.set_read_only(True)
+
+
+class WalkPackageFilesCommand(sublime_plugin.WindowCommand):
+    def folder_select(self, value, folder_items, cwd, package_folder):
+        if value > -1:
+            item = folder_items[value]
+            sublime.set_timeout(lambda: self.nav_folder(cwd, item, package_folder), 100)
+
+    def nav_folder(self, cwd, child, package_folder):
+        target = cwd
+        if child is not None:
+            child = child[:-1] if child.endswith("/") else child
+            if child == ".." and dirname(cwd) == package_folder:
+                sublime.set_timeout(self.show_packages, 100)
+                return
+            elif child == "..":
+                target = dirname(target)
+            else:
+                target = join(target, child)
+        if isdir(target):
+            folders = []
+            files = []
+            for item in listdir(target):
+                if item in [".svn", ".hg", ".git"]:
+                    continue
+                if isdir(join(target, item)):
+                    folders.append(item + "/")
+                else:
+                    files.append(item)
+            folders.sort()
+            files.sort()
+            folder_items = [".."] + folders + files
+            self.window.show_quick_panel(
+                folder_items,
+                lambda x: self.folder_select(x, folder_items, target, package_folder)
+            )
+        else:
+            self.window.open_file(target)
+
+    def nav_zip(self, cwd, child, package_folder):
+        pass
+
+    def open_pkg(self, value):
+        if value > -1:
+            location = self.packages[value][1]
+            if isdir(location):
+                sublime.set_timeout(lambda: self.nav_folder(location, None, dirname(location)), 100)
+            else:
+                sublime.set_timeout(lambda: self.nav_zip(location, None, dirname(location)), 100)
+
+    def run(self):
+        self.packages = []
+        for location in ps.get_packages():
+            for pkg in location:
+                self.packages.append((ps.packagename(pkg), pkg))
+        self.packages.sort()
+        self.show_packages()
+
+    def show_packages(self):
+        if len(self.packages):
+            self.window.show_quick_panel(
+                [pkg[0] for pkg in self.packages],
+                self.open_pkg
+            )
 
 
 class GetPackageFilesInputCommand(sublime_plugin.WindowCommand):
@@ -226,7 +292,7 @@ class GetPackageFilesCommand(_PackageSearchCommand):
                 # you can give it a nice file path name, but the tab
                 # will be huge.  If you use open_file, with a bogus path,
                 # the view will be created with the desired filepath, and
-                # it will properluy display the basename as the tab name,
+                # it will properly display the basename as the tab name,
                 # it will just report an issue reading the file in the console.
                 # Reopen a new view and configure it with the
                 # syntax and name and give the view a friendly name

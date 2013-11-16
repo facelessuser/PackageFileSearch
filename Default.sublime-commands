@@ -1,0 +1,25 @@
+[
+    //////////////////////////////////
+    // Package File Search
+    //////////////////////////////////
+    {
+        "caption": "Package File Search: Toggle Find All Mode",
+        "command": "toggle_package_search_find_all_mode"
+    },
+    {
+        "caption": "Package File Search: Navigator",
+        "command": "walk_package_files"
+    },
+    {
+        "caption": "Package File Search: Search Menu",
+        "command": "get_package_files_menu"
+    },
+    {
+        "caption": "Package File Search: Find Panel",
+        "command": "get_package_files_input"
+    },
+    {
+        "caption": "Package File Search: Set Color Scheme File",
+        "command": "get_package_scheme_file"
+    }
+]

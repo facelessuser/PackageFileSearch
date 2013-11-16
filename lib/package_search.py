@@ -10,30 +10,39 @@ from os.path import basename, dirname, isdir, join, normpath, splitext
 from fnmatch import fnmatch
 import zipfile
 
+__all__ = [
+    "sublime_package_paths",
+    "scan_for_packages",
+    "packagename",
+    "get_packages",
+    "PackageSearch"
+]
+
 
 def sublime_package_paths(full_path=False):
+    """
+    Get all the locations where plugins live
+    """
     return [sublime.installed_packages_path(), join(dirname(sublime.executable_path()), "Packages"), sublime.packages_path()]
 
 
-def scan_for_packages(file_path):
+def scan_for_packages(file_path, resolve_override=True):
+    """
+    Look for zipped and unzipped plugins.
+    """
     zips = [join(file_path, item) for item in listdir(file_path) if fnmatch(item, "*.sublime-package")]
     dirs = [join(file_path, item) for item in listdir(file_path) if isdir(join(file_path, item))]
 
-    copy_dirs = [packagename(d) for d in dirs[:]]
-    count = 0
-    offset = 0
-    for z in zips[:]:
-        z_pkg_name = packagename(z)
-        for d in copy_dirs:
-            if d == z_pkg_name:
-                del zips[count - offset]
-                offset += 1
-                break
-        count += 1
-    return dirs + zips
+    # Do zips take precedence or do folders? Currently I am having folders take precedence.
+    if resolve_override:
+        resolve_overrides(zips, dirs)
+    return zips + dirs
 
 
 def packagename(pth, normalize=True):
+    """
+    Get the package name from the path
+    """
     if isdir(pth):
         name = basename(pth)
     else:
@@ -41,56 +50,43 @@ def packagename(pth, normalize=True):
     return name.lower() if sublime.platform() == "windows" and normalize else name
 
 
+def resolve_overrides(package_list, override_list):
+    """
+    Remove packages from the list that are being overridden
+    """
+    override_names = [packagename(x) for x in override_list[:]]
+    count = 0
+    offset = 0
+    for p in package_list[:]:
+        pkg_name = packagename(p)
+        for o in override_names:
+            if o == pkg_name:
+                del package_list[count - offset]
+                offset += 1
+                break
+        count += 1
+
+
 def resolve_pkgs(defaults, installed, user):
-    copy_installed = [packagename(i) for i in installed[:]]
-
-    # resolve defaults/installed
-    count = 0
-    offset = 0
-    for d in defaults[:]:
-        d_pkg_name = packagename(d)
-        for i in copy_installed:
-            if i == d_pkg_name:
-                del defaults[count - offset]
-                offset += 1
-                break
-        count += 1
-
-    copy_user = [packagename(u) for u in user[:]]
-
-    # resolve defaults/user
-    count = 0
-    offset = 0
-    for d in defaults[:]:
-        d_pkg_name = packagename(d)
-        for u in copy_user:
-            if u == d_pkg_name:
-                del defaults[count - offset]
-                offset += 1
-                break
-        count += 1
-
-    # resolve installed/user
-    count = 0
-    offset = 0
-    for i in installed[:]:
-        i_pkg_name = packagename(i)
-        for u in copy_user:
-            if u == i_pkg_name:
-                del installed[count - offset]
-                offset += 1
-                break
-        count += 1
+    """
+    Resolve which packages to return. Account for package override.
+    """
+    resolve_overrides(defaults, installed)
+    resolve_overrides(defaults, user)
+    resolve_overrides(installed, user)
 
 
-def get_packages(resolve_overrides=True):
+def get_packages(resolve_override=True):
+    """
+    Get all packages.  Optionally disable resolving override packages.
+    """
     installed_pth, default_pth, user_pth= sublime_package_paths()
 
-    installed_pkgs = scan_for_packages(installed_pth)
-    default_pkgs = scan_for_packages(default_pth)
-    user_pkgs = scan_for_packages(user_pth)
+    installed_pkgs = scan_for_packages(installed_pth, resolve_overrides)
+    default_pkgs = scan_for_packages(default_pth, resolve_overrides)
+    user_pkgs = scan_for_packages(user_pth, resolve_overrides)
 
-    if resolve_overrides:
+    if resolve_override:
         resolve_pkgs(default_pkgs, installed_pkgs, user_pkgs)
 
     return default_pkgs, installed_pkgs, user_pkgs
@@ -106,55 +102,101 @@ class PackageSearch(object):
     def process_file(self, value, settings):
         pass
 
-    def find_files(self, files, pattern, settings, regex):
+    ################
+    # Qualify Files
+    ################
+    def find_files(self, files, file_path, pattern, settings, regex):
+        """
+        Find the file that matches the pattern
+        """
         for f in files:
             if regex:
                 if re.match(pattern, f[0], re.IGNORECASE) != None:
-                    settings.append([f[0].replace(self.packages, "").lstrip("\\").lstrip("/"), f[1]])
+                    settings.append([f[0].replace(file_path, "").lstrip("\\").lstrip("/"), f[1]])
             else:
                 if fnmatch(f[0], pattern):
-                    settings.append([f[0].replace(self.packages, "").lstrip("\\").lstrip("/"), f[1]])
+                    settings.append([f[0].replace(file_path, "").lstrip("\\").lstrip("/"), f[1]])
 
-    def walk(self, settings, plugin, pattern, regex=False):
-        for base, dirs, files in walk(plugin):
-            files = [(join(base, f), "Packages") for f in files]
-            self.find_files(files, pattern, settings, regex)
-
-    def get_zip_packages(self, file_path, package_type):
-        plugins = [(join(file_path, item), package_type) for item in listdir(file_path) if fnmatch(item, "*.sublime-package")]
-        return plugins
-
-    def search_zipped_files(self):
-        plugins = []
-        st_packages = sublime_package_paths()
-        plugins += self.get_zip_packages(st_packages[0], "Installed")
-        plugins += self.get_zip_packages(st_packages[1], "Default")
-        return plugins
-
+    ################
+    # Zipped
+    ################
     def walk_zip(self, settings, plugin, pattern, regex):
+        """
+        Walk the archived files within the plugin
+        """
         with zipfile.ZipFile(plugin[0], 'r') as z:
             zipped = [(join(basename(plugin[0]), normpath(fn)), plugin[1]) for fn in sorted(z.namelist())]
-            self.find_files(zipped, pattern, settings, regex)
+            self.find_files(zipped, "", pattern, settings, regex)
 
-    def find_raw(self, pattern, regex=False):
-        self.packages = normpath(sublime.packages_path())
-        settings = []
-        plugins = [join(self.packages, item) for item in listdir(self.packages) if isdir(join(self.packages, item))]
+    def get_zip_packages(self, settings, file_path, package_type, pattern, regex=False):
+        """
+        Get all the archived plugins in the plugin folder
+        """
+        plugins = [(join(file_path, item), package_type) for item in listdir(file_path) if fnmatch(item, "*.sublime-package")]
         for plugin in plugins:
-            self.walk(settings, plugin, pattern.strip(), regex)
-
-        self.zipped_idx = len(settings)
-
-        zipped_plugins = self.search_zipped_files()
-        for plugin in zipped_plugins:
             self.walk_zip(settings, plugin, pattern.strip(), regex)
+
+    def search_zipped_files(self, settings, pattern, regex):
+        """
+        Search the plugin folders for archived plugins
+        """
+        st_packages = sublime_package_paths()
+        self.get_zip_packages(settings, st_packages[2], "Packages", pattern, regex)
+        self.get_zip_packages(settings, st_packages[0], "Installed", pattern, regex)
+        self.get_zip_packages(settings, st_packages[1], "Default", pattern, regex)
+
+    ################
+    # Unzipped
+    ################
+    def walk(self, settings, file_path, plugin, package_type, pattern, regex=False):
+        """
+        Walk the files within the plugin
+        """
+        for base, dirs, files in walk(plugin):
+            files = [(join(base, f), package_type) for f in files]
+            self.find_files(files, file_path, pattern, settings, regex)
+
+    def get_unzipped_packages(self, settings, file_path, package_type, pattern, regex=False):
+        """
+        Get all of the plugins in the plugin folder
+        """
+        plugins = [join(file_path, item) for item in listdir(file_path) if isdir(join(file_path, item))]
+        for plugin in plugins:
+            self.walk(settings, file_path, plugin, package_type, pattern.strip(), regex)
+
+    def search_unzipped_files(self, settings, pattern, regex):
+        """
+        Search the plugin folders for unzipped packages
+        """
+        st_packages = sublime_package_paths()
+        self.get_unzipped_packages(settings, st_packages[2], "Packages", pattern, regex)
+        self.get_unzipped_packages(settings, st_packages[0], "Installed", pattern, regex)
+        self.get_unzipped_packages(settings, st_packages[1], "Default", pattern, regex)
+
+    ################
+    # Search All
+    ################
+    def find_raw(self, pattern, regex=False):
+        """
+        Search all packages regardless of whether it is being overridden
+        """
+        settings = []
+        self.search_unzipped_files(settings, pattern, regex)
+        self.zipped_idx = len(settings)
+        self.search_zipped_files(settings, pattern, regex)
 
         self.window.show_quick_panel(
             settings,
             lambda x: self.process_file(x, settings=settings)
         )
 
+    ################
+    # Search Override
+    ################
     def find(self, pattern, regex):
+        """
+        Search just the active packages.  Not the ones that have been overridden
+        """
         resources = []
         if not regex:
             resources = sublime.find_resources(pattern)
@@ -173,6 +215,9 @@ class PackageSearch(object):
         )
 
     def search(self, **kwargs):
+        """
+        Search packages
+        """
         kwargs = self.pre_process(**kwargs)
         pattern = kwargs.get("pattern", None)
         regex = kwargs.get("regex", False)

@@ -1,0 +1,21 @@
+{
+    // Default pre-set patterns
+    "pattern_list": [
+        {"caption": "Settings Files",        "search": {"pattern": "*.sublime-settings", "regex": false}},
+        {"caption": "Keymap Files",          "search": {"pattern": "*.sublime-keymap",   "regex": false}},
+        {"caption": "Command Files",         "search": {"pattern": "*.sublime-commands", "regex": false}},
+        {"caption": "Readme Files",          "search": {"pattern": "*readme*",           "regex": false}},
+        {"caption": "Language Syntax Files", "search": {"pattern": "*tmLanguage",        "regex": false}},
+        {"caption": "Snippet Files",         "search": {"pattern": "*.sublime-snippet",  "regex": false}},
+        {"caption": "Preference Files",      "search": {"pattern": "*.tmPreferences",    "regex": false}},
+        {"caption": "Color Scheme Files",    "search": {"pattern": "*.tmTheme",          "regex": false}},
+        {"caption": "Theme Files",           "search": {"pattern": "*.sublime-theme",    "regex": false}},
+        {"caption": "Python Source Files",   "search": {"pattern": "*.py",               "regex": false}},
+        {"caption": "Sublime Menues",        "search": {"pattern": "*.sublime-menu",     "regex": false}}
+    ],
+
+    // "find all" means to look in every package regardless of whether
+    // it is being overridden.  This means you will see duplicate files if
+    // you have two instances of a plugin.
+    "find_all_by_default": false
+}

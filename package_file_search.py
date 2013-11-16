@@ -83,14 +83,13 @@ Example Commands:
 
 import sublime
 import sublime_plugin
-from os.path import join, basename, exists, isdir, dirname
+from os.path import join, basename, exists, isdir, dirname, normpath
 from os import listdir
 import re
 import zipfile
 import tempfile
 import shutil
-from .lib.package_search import PackageSearch, sublime_package_paths
-from .lib import package_search as ps
+from .lib.package_search import *
 
 
 def get_encoding(view):
@@ -134,6 +133,11 @@ class WalkPackageFilesCommand(sublime_plugin.WindowCommand):
             item = folder_items[value]
             sublime.set_timeout(lambda: self.nav_folder(cwd, item, package_folder), 100)
 
+    def zip_select(self, value, folder_items, zippkg, cwd, package_folder):
+        if value > -1:
+            item = folder_items[value]
+            sublime.set_timeout(lambda: self.nav_zip(zippkg, cwd, item, package_folder), 100)
+
     def nav_folder(self, cwd, child, package_folder):
         target = cwd
         if child is not None:
@@ -165,8 +169,86 @@ class WalkPackageFilesCommand(sublime_plugin.WindowCommand):
         else:
             self.window.open_file(target)
 
-    def nav_zip(self, cwd, child, package_folder):
-        pass
+    def open_zip_file(self, z, zip_file, file_name):
+        text = z.read(z.getinfo(zip_file))
+
+        # Unpack the file in a temporary location
+        d = tempfile.mkdtemp(prefix="pkgfs")
+        with open(join(d, basename(file_name)), "wb") as f:
+            f.write(text)
+
+        # Open and then close the file in a view in order
+        # to let sublime guess encoding and syntax
+        view = self.window.open_file(f.name)
+        encoding, st_encoding = get_encoding(view)
+        self.window.focus_view(view)
+        self.window.run_command("close_file")
+        syntax = view.settings().get('syntax')
+        shutil.rmtree(d)
+
+        # When a file is opened from disk, you can't rename the
+        # the path location.  If you try and use new_file,
+        # you can give it a nice file path name, but the tab
+        # will be huge.  If you use open_file, with a bogus path,
+        # the view will be created with the desired filepath, and
+        # it will properly display the basename as the tab name,
+        # it will just report an issue reading the file in the console.
+        # Reopen a new view and configure it with the
+        # syntax and name and give the view a friendly name
+        # opposed to an ugly temp directory
+        view = self.window.open_file(file_name)
+        view.set_syntax_file(syntax)
+        view.set_encoding(st_encoding)
+        try:
+            WriteArchivedPackageContentCommand.bfr = text.decode(encoding).replace('\r', '')
+        except:
+            view.set_encoding("UTF-8")
+            WriteArchivedPackageContentCommand.bfr = text.decode("utf-8").replace('\r', '')
+        sublime.set_timeout(lambda: view.run_command("write_archived_package_content"), 0)
+
+    def nav_zip(self, zippkg, cwd, child, package_folder):
+        target = "" if cwd is None else cwd
+        if child is not None:
+            child = child[:-1] if child.endswith('/') else child
+            if child == ".." and cwd == "":
+                sublime.set_timeout(self.show_packages, 100)
+                return
+            elif child == "..":
+                target = dirname(target)
+            else:
+                target = join(target, child)
+        target.replace("\\", '/')
+        folders = []
+        files = []
+        with zipfile.ZipFile(zippkg, 'r') as z:
+            for item in z.infolist():
+                if target == item.filename:
+                    self.open_zip_file(z, item.filename, join(zippkg, normpath(item.filename)))
+                    return
+                if target != "" and not item.filename.startswith(target + '/'):
+                    continue
+                if target != "":
+                    parts = item.filename.replace(target + '/', '', 1).split('/')
+                else:
+                    parts = item.filename.split('/')
+                if parts[-1] == '':
+                    entry = parts[0] + '/'
+                    if entry not in folders:
+                        folders.append(entry)
+                else:
+                    if len(parts) > 1:
+                        entry = parts[0] + '/'
+                        if entry not in folders:
+                            folders.append(parts[0] + '/')
+                    else:
+                        files.append(parts[0])
+        folders.sort()
+        files.sort()
+        folder_items = [".."] + folders + files
+        self.window.show_quick_panel(
+            folder_items,
+            lambda x: self.zip_select(x, folder_items, zippkg, target, package_folder)
+        )
 
     def open_pkg(self, value):
         if value > -1:
@@ -174,13 +256,13 @@ class WalkPackageFilesCommand(sublime_plugin.WindowCommand):
             if isdir(location):
                 sublime.set_timeout(lambda: self.nav_folder(location, None, dirname(location)), 100)
             else:
-                sublime.set_timeout(lambda: self.nav_zip(location, None, dirname(location)), 100)
+                sublime.set_timeout(lambda: self.nav_zip(location, None, None, dirname(location)), 100)
 
     def run(self):
         self.packages = []
-        for location in ps.get_packages():
+        for location in get_packages():
             for pkg in location:
-                self.packages.append((ps.packagename(pkg), pkg))
+                self.packages.append((packagename(pkg), pkg))
         self.packages.sort()
         self.show_packages()
 
@@ -209,11 +291,11 @@ class GetPackageFilesInputCommand(sublime_plugin.WindowCommand):
                 }
             )
 
-    def run(self, find_all=False):
+    def run(self):
         self.window.show_input_panel(
             "File Pattern: ",
             "",
-            lambda x: self.find_pattern(x, find_all=find_all),
+            lambda x: self.find_pattern(x, find_all=FIND_ALL_MODE),
             None,
             None
         )
@@ -235,18 +317,20 @@ class GetPackageFilesMenuCommand(sublime_plugin.WindowCommand):
                 100
             )
 
-    def run(self, pattern_list=[], find_all=False):
+    def run(self, pattern_list=None):
         patterns = []
+        if pattern_list is None:
+            pattern_list = sublime.load_settings("package_file_search.sublime-settings").get("pattern_list", [])
         types = []
         for item in pattern_list:
             patterns.append(item["search"])
             types.append(item["caption"])
         if len(types) == 1:
-            self.find_files(0, patterns, find_all)
+            self.find_files(0, patterns, FIND_ALL_MODE)
         elif len(types):
             self.window.show_quick_panel(
                 types,
-                lambda x: self.find_files(x, patterns=patterns, find_all=find_all)
+                lambda x: self.find_files(x, patterns=patterns, find_all=FIND_ALL_MODE)
             )
 
 
@@ -333,3 +417,15 @@ class GetPackageSchemeFileCommand(_PackageSearchCommand):
     def pre_process(self, **kwargs):
         self.current_color_scheme = sublime.load_settings("Preferences.sublime-settings").get("color_scheme")
         return {"pattern": "*.tmTheme"}
+
+
+class TogglePackageSearchFindAllModeCommand(sublime_plugin.ApplicationCommand):
+    def run(self):
+        global FIND_ALL_MODE
+        FIND_ALL_MODE = False if FIND_ALL_MODE else True
+        sublime.status_message("Package File Search: Find All = %s" % str(FIND_ALL_MODE))
+
+
+def plugin_loaded():
+    global FIND_ALL_MODE
+    FIND_ALL_MODE = sublime.load_settings("package_file_search.sublime-settings").get("find_all_by_default", False)

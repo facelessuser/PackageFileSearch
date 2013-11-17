@@ -8,7 +8,7 @@
     },
     {
         "caption": "Package File Search: Navigator",
-        "command": "walk_package_files"
+        "command": "package_file_search_nav"
     },
     {
         "caption": "Package File Search: Search Menu",
@@ -28,6 +28,6 @@
     },
     {
         "caption": "Package File Search: Set Color Scheme File",
-        "command": "get_package_scheme_file"
+        "command": "package_file_search_color_scheme"
     }
 ]

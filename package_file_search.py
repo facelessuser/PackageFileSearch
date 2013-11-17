@@ -127,7 +127,7 @@ class WriteArchivedPackageContentCommand(sublime_plugin.TextCommand):
             self.view.set_read_only(True)
 
 
-class WalkPackageFilesCommand(sublime_plugin.WindowCommand):
+class PackageFileSearchNavCommand(sublime_plugin.WindowCommand):
     def folder_select(self, value, folder_items, cwd, package_folder):
         if value > -1:
             item = folder_items[value]
@@ -287,7 +287,7 @@ class _GetPackageFilesInputCommand(sublime_plugin.WindowCommand):
                 regex = True
                 pattern = m.group(1)
             self.window.run_command(
-                "get_package_files",
+                "package_file_search",
                 {
                     "pattern": pattern,
                     "regex": regex,
@@ -326,7 +326,7 @@ class _GetPackageFilesMenuCommand(sublime_plugin.WindowCommand):
             pat = patterns[value]
             sublime.set_timeout(
                 lambda: self.window.run_command(
-                    "get_package_files",
+                    "package_file_search",
                     {
                         "pattern": pat["pattern"],
                         "regex": pat.get("regex", False),
@@ -372,7 +372,7 @@ class _PackageSearchCommand(sublime_plugin.WindowCommand, PackageSearch):
         self.search(**kwargs)
 
 
-class GetPackageFilesCommand(_PackageSearchCommand):
+class PackageFileSearchCommand(_PackageSearchCommand):
     def open_zip_file(self, fn):
         file_name = None
         zip_package = None
@@ -435,7 +435,7 @@ class GetPackageFilesCommand(_PackageSearchCommand):
                 self.window.run_command("open_file", {"file": settings[value].replace("Packages", "${packages}", 1)})
 
 
-class GetPackageSchemeFileCommand(_PackageSearchCommand):
+class PackageFileSearchColorSchemeCommand(_PackageSearchCommand):
     def on_select(self, value, settings):
         if value != -1:
             sublime.load_settings("Preferences.sublime-settings").set("color_scheme", settings[value])

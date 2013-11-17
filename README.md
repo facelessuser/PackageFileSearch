@@ -3,73 +3,64 @@
 PackageFileSearch is plugin designed to allow a user to search all default, installed, and unpacked plugins for specific files.
 
 # Usage
-In order to use Package File Search, you just need to setup the commands you would like to have:
+In order to use Package File Search, you can use one of the five commands:``
 
-## Preset Package Search Menu
-You can define a command with all of your commonly searched patterns, or you can define multiple commands each calling a separate pattern.  If the command only has one defined pattern, no menu will be shown, and the search will immediately be executed.  If there are multiple patterns, a menu will be displayed asking the user which pattern they would like to search with.  You simply give it a pattern list containing your entries.  Each entry must define a caption and the search settings: the pattern to search with and whether the pattern is a regex pattern or not.
+- Package File Search: Navigator
+- Package File Search: Extract
+- Package File Search: Search Menu
+- Package File Search: Find Panel
+- Package File Search: Set Color Scheme File
+
+## Package File Search: Navigator
+This is a command that allows you to navigate all the plugins.  It allows you to navigate their file system; even if they are archived in a sublime-package zip.  It only displays the plugins that would be loaded by sublime.  For example, if Package Control installed a plugin in the `Installed Packages` folder, then you downloaded that same plugin into the `Packages` folder, the `Packages` version would override the `Installed Packages` version, and the `Packages` version is what would show up in the navigator.  Unarchived files will open in an editable view.  Archived files will open in a read only view; you cannot directly modify the zipped files.
+
+## Package File Search: Extract
+The extract command allows you to unpack an archived plugin into the `Packages` folder if it has not already been done.
+
+## Package File Search: Search Menu
+With this command, a menu of pre-defined searches will be displayed.  When one is selected, all of the packages will be searched based on the selected pre-defined search pattern.  This will search only the current active plugns (not overridden plugins), unless you toggle `Find All` mode via the `Package File Search: Toggle Find All Mode` command.  Then the command will search all plugins regardless of whether they are the active plugin or not.  This may give duplicate results, but they will be distinguished by their install locatin: `Default`, `Installed Packages`, and `Packages`.  When `Find All` mode is active, the command will be shown in the command palette as `Package File Search: Search Menu (Find All)`.
+
+You can add to the pre-defined list, or change it completely in the `package_file_search.sublime-settings` file.
 
 ```javascript
-    {
-        "caption": "Package File Search: Menu",
-        "command": "get_package_files_menu",
-        "args": {
-            "pattern_list": [
-                {"caption": "Settings Files",        "search": {"pattern": "*.sublime-settings", "regex": false}},
-                {"caption": "Keymap Files",          "search": {"pattern": "*.sublime-keymap",   "regex": false}},
-                {"caption": "Command Files",         "search": {"pattern": "*.sublime-commands", "regex": false}},
-                {"caption": "Readme Files",          "search": {"pattern": "*readme*",           "regex": false}},
-                {"caption": "Language Syntax Files", "search": {"pattern": "*tmLanguage",        "regex": false}},
-                {"caption": "Snippet Files",         "search": {"pattern": "*.sublime-snippet",  "regex": false}},
-                {"caption": "Preference Files",      "search": {"pattern": "*.tmPreferences",    "regex": false}},
-                {"caption": "Color Scheme Files",    "search": {"pattern": "*.tmTheme",          "regex": false}},
-                {"caption": "Theme Files",           "search": {"pattern": "*.sublime-theme",    "regex": false}},
-                {"caption": "Python Source Files",   "search": {"pattern": "*.py",               "regex": false}},
-                {"caption": "Sublime Menues",        "search": {"pattern": "*.sublime-menu",     "regex": false}}
-            ]
-        }
-    },
+    // Default pre-set patterns
+    "pattern_list": [
+        {"caption": "Color Schemes",         "search": {"pattern": "*.tmTheme",          "regex": false}},
+        {"caption": "Commands",              "search": {"pattern": "*.sublime-commands", "regex": false}},
+        {"caption": "Keymaps",               "search": {"pattern": "*.sublime-keymap",   "regex": false}},
+        {"caption": "Language Syntaxes",     "search": {"pattern": "*tmLanguage",        "regex": false}},
+        {"caption": "Macros",                "search": {"pattern": "*.sublime-macro",    "regex": false}},
+        {"caption": "Menus",                 "search": {"pattern": "*.sublime-menu",     "regex": false}},
+        {"caption": "Preferences",           "search": {"pattern": "*.tmPreferences",    "regex": false}},
+        {"caption": "Python Source Files",   "search": {"pattern": "*.py",               "regex": false}},
+        {"caption": "Readme Files",          "search": {"pattern": "*readme*",           "regex": false}},
+        {"caption": "Settings",              "search": {"pattern": "*.sublime-settings", "regex": false}},
+        {"caption": "Snippets",              "search": {"pattern": "*.sublime-snippet",  "regex": false}},
+        {"caption": "Themes",                "search": {"pattern": "*.sublime-theme",    "regex": false}}
+    ],
 ```
 
-By default, the search will show you the currently used version of a package file.  If, for instance, you have a package overriding a default package, the default version will not be shown.  If you would like to display all versions, use the `find_all` argument.
+- caption: the desired name to show up in the menut
+- search: the search settings to be used (`pattern` and `regex`)
+- pattern: the wild card or regex pattern to be used
+- regex: whether the pattern is a regex pattern or not
+
+## Package File Search: Find Panel
+The Find Panel command allows a custom search pattern that can be given to search all active packages.  To searh with traditional wild cards, just enter your pattern into the input field.  To use regex, surround the regex in back tics.  This will search only the current active plugns (not overridden plugins), unless you toggle `Find All` mode via the `Package File Search: Toggle Find All Mode` command.  Then the command will search all plugins regardless of whether they are the active plugin or not.  This may give duplicate results, but they will be distinguished by their install locatin: `Default`, `Installed Packages`, and `Packages`.  When `Find All` mode is active, the command will be shown in the command palette as `Package File Search: Find Panel (Find All)`
+
+## Package File Search: Set Color Scheme File
+This a command to allow you to look at all color scheme files in active packages and to set it as the current color scheme file.  It will give you a live preview of the color scheme before you select it.  This will only show color schemes from current active plugns (not overridden plugins).
+
+## Package File Search: Toggle Find All Mode
+The `Package File Search: Search Menu` and  `Package File Search: Find Panel` command by default search only the active plugins (not the overridden plugins).  But toggling `Find All` mode to `True` via this command will search all plugins regardless of whether they are the active plugin or not.  This may give duplicate results, but they will be distinguished by their install locatin: `Default`, `Installed Packages`, and `Packages`.  When `Find All` mode is active, the commands will be shown in the command palette as `Package File Search: Search Menu (Find All)` and `Package File Search: Find Panel (Find All)` respectively.
+
+If you desire `Find All` mode to be `True` by default, you can set the desired behavior in the `package_file_search.sublime-settings` file.
 
 ```javascript
-    {
-        "caption": "Package false Search: Menu (find false)",
-        "command": "get_package_files_menu",
-        "args": {
-            "pattern_list": [
-                {"caption": "Settings Files",        "search": {"pattern": "*.sublime-settings", "regex": false}}
-            ],
-            "find_all": true
-        }
-    },
-```
-
-## Searching a Pattern on the Fly
-Package File Search also allows a user to search patterns on the fly.  For this you can define a command that takes an input.  If you would like to use regex, surround your pattern with back tics *`*.
-
-By default, the search will show you the currently used version of a package file.  If, for instance, you have a package overriding a default package, the default version will not be shown.  If you would like to display all versions, use the `find_all` argument.
-
-```javascript
-    {
-        "caption": "Package false Search: Input Search Pattern",
-        "command": "get_package_files_input"
-    },
-    {
-        "caption": "Package File Search: Input Search Pattern (find all)",
-        "command": "get_package_files_input",
-        "args": {"find_all": true}
-    },
-```
-
-## Special Color Scheme Search
-This is a special command that allows you to list all color schemes.  As you highlight them in the drop down menu the color scheme will be previewed on the currently open view.  Selected the scheme will set it in your preferences; canceling will return you to your current scheme.
-
-```javascript
-    {
-        "caption": "Package File Search: Set Color Scheme File",
-        "command": "get_package_scheme_file"
-    },
+    // "find all" means to look in every package regardless of whether
+    // it is being overridden.  This means you will see duplicate files if
+    // you have two instances of a plugin.
+    "find_all_by_default": false
 ```
 
 # License

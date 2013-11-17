@@ -276,7 +276,9 @@ class WalkPackageFilesCommand(sublime_plugin.WindowCommand):
             )
 
 
-class GetPackageFilesInputCommand(sublime_plugin.WindowCommand):
+class _GetPackageFilesInputCommand(sublime_plugin.WindowCommand):
+    find_mode = False
+
     def find_pattern(self, pattern, find_all=False):
         regex = False
         if pattern != "":
@@ -297,13 +299,28 @@ class GetPackageFilesInputCommand(sublime_plugin.WindowCommand):
         self.window.show_input_panel(
             "File Pattern: ",
             "",
-            lambda x: self.find_pattern(x, find_all=FIND_ALL_MODE),
+            lambda x: self.find_pattern(x, find_all=self.find_mode),
             None,
             None
         )
 
+class PackageFileSearchInputCommand(_GetPackageFilesInputCommand):
+    find_mode = False
 
-class GetPackageFilesMenuCommand(sublime_plugin.WindowCommand):
+    def is_enabled(self):
+        return not FIND_ALL_MODE
+
+
+class PackageFileSearchAllInputCommand(_GetPackageFilesInputCommand):
+    find_mode = True
+
+    def is_enabled(self):
+        return FIND_ALL_MODE
+
+
+class _GetPackageFilesMenuCommand(sublime_plugin.WindowCommand):
+    find_mode = False
+
     def find_files(self, value, patterns, find_all):
         if value > -1:
             pat = patterns[value]
@@ -328,12 +345,26 @@ class GetPackageFilesMenuCommand(sublime_plugin.WindowCommand):
             patterns.append(item["search"])
             types.append(item["caption"])
         if len(types) == 1:
-            self.find_files(0, patterns, FIND_ALL_MODE)
+            self.find_files(0, patterns, self.find_mode)
         elif len(types):
             self.window.show_quick_panel(
                 types,
-                lambda x: self.find_files(x, patterns=patterns, find_all=FIND_ALL_MODE)
+                lambda x: self.find_files(x, patterns=patterns, find_all=self.find_mode)
             )
+
+
+class PackageFileSearchMenuCommand(_GetPackageFilesMenuCommand):
+    find_mode = False
+
+    def is_enabled(self):
+        return not FIND_ALL_MODE
+
+
+class PackageFileSearchAllMenuCommand(_GetPackageFilesMenuCommand):
+    find_mode = True
+
+    def is_enabled(self):
+        return FIND_ALL_MODE
 
 
 class _PackageSearchCommand(sublime_plugin.WindowCommand, PackageSearch):

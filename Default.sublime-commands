@@ -12,11 +12,19 @@
     },
     {
         "caption": "Package File Search: Search Menu",
-        "command": "get_package_files_menu"
+        "command": "package_file_search_menu"
+    },
+    {
+        "caption": "Package File Search: Search Menu (Find All)",
+        "command": "package_file_search_all_menu"
     },
     {
         "caption": "Package File Search: Find Panel",
-        "command": "get_package_files_input"
+        "command": "package_file_search_input"
+    },
+    {
+        "caption": "Package File Search: Find Panel (Find All)",
+        "command": "package_file_search_all_input"
     },
     {
         "caption": "Package File Search: Set Color Scheme File",

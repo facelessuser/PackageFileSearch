@@ -14,6 +14,8 @@ import tempfile
 import shutil
 from .lib.package_search import *
 
+EXCLUDES = [".svn", ".hg", ".git", ".DS_Store"]
+
 
 def get_encoding(view):
     mapping = [
@@ -76,7 +78,7 @@ class PackageFileSearchNavCommand(sublime_plugin.WindowCommand):
             folders = []
             files = []
             for item in listdir(target):
-                if item in [".svn", ".hg", ".git"]:
+                if item in EXCLUDES:
                     continue
                 if isdir(join(target, item)):
                     folders.append(item + "/")
@@ -154,6 +156,8 @@ class PackageFileSearchNavCommand(sublime_plugin.WindowCommand):
                     parts = item.filename.replace(target + '/', '', 1).split('/')
                 else:
                     parts = item.filename.split('/')
+                if parts[0] in EXCLUDES:
+                    continue
                 if parts[-1] == '':
                     if parts[0] == "":
                         continue

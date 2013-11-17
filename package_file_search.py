@@ -232,6 +232,8 @@ class WalkPackageFilesCommand(sublime_plugin.WindowCommand):
                 else:
                     parts = item.filename.split('/')
                 if parts[-1] == '':
+                    if parts[0] == "":
+                        continue
                     entry = parts[0] + '/'
                     if entry not in folders:
                         folders.append(entry)

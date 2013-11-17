@@ -11,6 +11,10 @@
         "command": "package_file_search_nav"
     },
     {
+        "caption": "Package File Search: Extract",
+        "command": "package_file_search_extract"
+    },
+    {
         "caption": "Package File Search: Search Menu",
         "command": "package_file_search_menu"
     },

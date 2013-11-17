@@ -2,89 +2,12 @@
 Package File Search
 Licensed under MIT
 Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
-
-Search Command:
-Launch get_package_files_menu, and select what kind of search to do.
-If only one pattern is supplied, menu will be skipped and the first
-pattern will searched.  By default, this command searches for the
-current accessible file, so unpacked plugins in the Packages folder,
-would override the default or installed packages.  Use "find_all" option
-to list all matches, even duplicates.
-
-Input Search Command:
-Enter in search pattern and hit enter.  If a regex pattern is required,
-surround in back ticks "`".  By default, this command searches for the
-current accessible file, so unpacked plugins in the Packages folder,
-would override the default or installed packages.  Use "find_all" option
-to list all matches, even duplicates.
-
-Color Scheme Search command:
-This is a special search command that previews the color sheme, on menu
-option highlight, and when selected, sets the color scheme.
-
-
-Example Commands:
-    //////////////////////////////////
-    // Package File Search Commands
-    //////////////////////////////////
-    {
-        "caption": "Package File Search: Menu",
-        "command": "get_package_files_menu",
-        "args": {
-            "pattern_list": [
-                {"caption": "Settings Files",        "search": {"pattern": "*.sublime-settings", "regex": false}},
-                {"caption": "Keymap Files",          "search": {"pattern": "*.sublime-keymap",   "regex": false}},
-                {"caption": "Command Files",         "search": {"pattern": "*.sublime-commands", "regex": false}},
-                {"caption": "Readme Files",          "search": {"pattern": "*readme*",           "regex": false}},
-                {"caption": "Language Syntax Files", "search": {"pattern": "*tmLanguage",        "regex": false}},
-                {"caption": "Snippet Files",         "search": {"pattern": "*.sublime-snippet",  "regex": false}},
-                {"caption": "Preference Files",      "search": {"pattern": "*.tmPreferences",    "regex": false}},
-                {"caption": "Color Scheme Files",    "search": {"pattern": "*.tmTheme",          "regex": false}},
-                {"caption": "Theme Files",           "search": {"pattern": "*.sublime-theme",    "regex": false}},
-                {"caption": "Python Source Files",   "search": {"pattern": "*.py",               "regex": false}},
-                {"caption": "Sublime Menues",        "search": {"pattern": "*.sublime-menu",     "regex": false}}
-            ]
-        }
-    },
-    {
-        "caption": "Package false Search: Menu (find false)",
-        "command": "get_package_files_menu",
-        "args": {
-            "pattern_list": [
-                {"caption": "Settings Files",        "search": {"pattern": "*.sublime-settings", "regex": false}},
-                {"caption": "Keymap Files",          "search": {"pattern": "*.sublime-keymap",   "regex": false}},
-                {"caption": "Command Files",         "search": {"pattern": "*.sublime-commands", "regex": false}},
-                {"caption": "Readme Files",          "search": {"pattern": "*readme*",           "regex": false}},
-                {"caption": "Language Syntax Files", "search": {"pattern": "*tmLanguage",        "regex": false}},
-                {"caption": "Snippet Files",         "search": {"pattern": "*.sublime-snippet",  "regex": false}},
-                {"caption": "Preference Files",      "search": {"pattern": "*.tmPreferences",    "regex": false}},
-                {"caption": "Color Scheme Files",    "search": {"pattern": "*.tmTheme",          "regex": false}},
-                {"caption": "Theme Files",           "search": {"pattern": "*.sublime-theme",    "regex": false}},
-                {"caption": "Python Source Files",   "search": {"pattern": "*.py",               "regex": false}},
-                {"caption": "Sublime Menues",        "search": {"pattern": "*.sublime-menu",     "regex": false}}
-            ],
-            "find_all": true
-        }
-    },
-    {
-        "caption": "Package false Search: Input Search Pattern",
-        "command": "get_package_files_input"
-    },
-    {
-        "caption": "Package File Search: Input Search Pattern (find all)",
-        "command": "get_package_files_input",
-        "args": {"find_all": true}
-    },
-    {
-        "caption": "Package File Search: Set Color Scheme File",
-        "command": "get_package_scheme_file"
-    },
 """
 
 import sublime
 import sublime_plugin
 from os.path import join, basename, exists, isdir, dirname, normpath
-from os import listdir
+from os import listdir, mkdir
 import re
 import zipfile
 import tempfile
@@ -365,6 +288,27 @@ class PackageFileSearchAllMenuCommand(_GetPackageFilesMenuCommand):
 
     def is_enabled(self):
         return FIND_ALL_MODE
+
+
+class PackageFileSearchExtractCommand(sublime_plugin.WindowCommand):
+    def extract(self, value, packages):
+        if value > -1:
+            pkg = packages[value]
+            name = packagename(pkg)
+            dest = join(sublime.packages_path(), name)
+            if not exists(dest):
+                mkdir(dest)
+            with zipfile.ZipFile(pkg) as z:
+                z.extractall(dest)
+
+    def run(self):
+        defaults, installed, _ = get_packages()
+        packages = defaults + installed
+        if len(packages):
+            self.window.show_quick_panel(
+                [packagename(pkg) for pkg in packages],
+                lambda x: self.extract(x, packages)
+            )
 
 
 class _PackageSearchCommand(sublime_plugin.WindowCommand, PackageSearch):

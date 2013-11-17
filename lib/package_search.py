@@ -26,17 +26,16 @@ def sublime_package_paths(full_path=False):
     return [sublime.installed_packages_path(), join(dirname(sublime.executable_path()), "Packages"), sublime.packages_path()]
 
 
-def scan_for_packages(file_path, resolve_override=True):
+def scan_for_packages(file_path, archives=False):
     """
     Look for zipped and unzipped plugins.
     """
-    zips = [join(file_path, item) for item in listdir(file_path) if fnmatch(item, "*.sublime-package")]
-    dirs = [join(file_path, item) for item in listdir(file_path) if isdir(join(file_path, item))]
+    if archives:
+        plugins = [join(file_path, item) for item in listdir(file_path) if fnmatch(item, "*.sublime-package")]
+    else:
+        plugins = [join(file_path, item) for item in listdir(file_path) if isdir(join(file_path, item))]
 
-    # Do zips take precedence or do folders? Currently I am having folders take precedence.
-    if resolve_override:
-        resolve_overrides(zips, dirs)
-    return zips + dirs
+    return plugins
 
 
 def packagename(pth, normalize=True):
@@ -82,9 +81,9 @@ def get_packages(resolve_override=True):
     """
     installed_pth, default_pth, user_pth= sublime_package_paths()
 
-    installed_pkgs = scan_for_packages(installed_pth, resolve_overrides)
-    default_pkgs = scan_for_packages(default_pth, resolve_overrides)
-    user_pkgs = scan_for_packages(user_pth, resolve_overrides)
+    installed_pkgs = scan_for_packages(installed_pth, archives=True)
+    default_pkgs = scan_for_packages(default_pth, archives=True)
+    user_pkgs = scan_for_packages(user_pth)
 
     if resolve_override:
         resolve_pkgs(default_pkgs, installed_pkgs, user_pkgs)
@@ -141,7 +140,7 @@ class PackageSearch(object):
         Search the plugin folders for archived plugins
         """
         st_packages = sublime_package_paths()
-        self.get_zip_packages(settings, st_packages[2], "Packages", pattern, regex)
+        # self.get_zip_packages(settings, st_packages[2], "Packages", pattern, regex)
         self.get_zip_packages(settings, st_packages[0], "Installed", pattern, regex)
         self.get_zip_packages(settings, st_packages[1], "Default", pattern, regex)
 
@@ -170,8 +169,8 @@ class PackageSearch(object):
         """
         st_packages = sublime_package_paths()
         self.get_unzipped_packages(settings, st_packages[2], "Packages", pattern, regex)
-        self.get_unzipped_packages(settings, st_packages[0], "Installed", pattern, regex)
-        self.get_unzipped_packages(settings, st_packages[1], "Default", pattern, regex)
+        # self.get_unzipped_packages(settings, st_packages[0], "Installed", pattern, regex)
+        # self.get_unzipped_packages(settings, st_packages[1], "Default", pattern, regex)
 
     ################
     # Search All

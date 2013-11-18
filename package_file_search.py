@@ -7,7 +7,8 @@ Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
 import sublime
 import sublime_plugin
 from os.path import join, basename, exists, isdir, dirname, normpath
-from os import listdir, mkdir
+from os import listdir, mkdir, chmod, rmdir, remove
+import stat
 import re
 import zipfile
 import tempfile
@@ -15,6 +16,9 @@ import shutil
 from .lib.package_search import *
 
 EXCLUDES = [".svn", ".hg", ".git", ".DS_Store"]
+
+def log(s):
+    print("PackageFileSearch: %s" % s)
 
 
 def get_encoding(view):
@@ -26,7 +30,6 @@ def get_encoding(view):
     ]
     encoding = view.encoding()
     orig = encoding
-    print(orig)
     m = re.match(r'.+\((.*)\)', encoding)
     if m is not None:
         encoding = m.group(1)
@@ -36,6 +39,39 @@ def get_encoding(view):
 
     return ("utf_8", "UTF-8") if encoding in ["Undefined", "Hexidecimal"] else (encoding, orig)
 
+
+def on_rm_error(func, path, exc_info):
+    excvalue = exc_info[1]
+    if func in (rmdir, remove):
+        chmod(path, stat.S_IRWXU| stat.S_IRWXG| stat.S_IRWXO) # 0777
+        try:
+            func(path)
+        except:
+            if sublime.platform() == "windows":
+                # Why are you being so stubborn windows?
+                # This situation only randomly occurs
+                log("Windows is being stubborn...go through rmdir to remove temp folder")
+                import subprocess
+                cmd = ["rmdir", "/S", path]
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                process = subprocess.Popen(
+                    cmd,
+                    startupinfo=startupinfo,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    stdin=subprocess.PIPE,
+                    shell=False
+                )
+                returncode = process.returncode
+                if returncode:
+                    log("Why won't you play nice, Windows!")
+                    log(process.communicate()[0])
+                    raise
+            else:
+                raise
+    else:
+        raise
 
 def open_package_file_zip(pth, resource):
     found = False
@@ -59,7 +95,7 @@ def open_package_file_zip(pth, resource):
                 win.focus_view(view)
                 win.run_command("close_file")
                 syntax = view.settings().get('syntax')
-                shutil.rmtree(d)
+                shutil.rmtree(d, onerror=on_rm_error)
 
                 # When a file is opened from disk, you can't rename the
                 # the path location.  If you try and use new_file,
@@ -80,6 +116,7 @@ def open_package_file_zip(pth, resource):
                     view.set_encoding("UTF-8")
                     WriteArchivedPackageContentCommand.bfr = text.decode("utf-8").replace('\r', '')
                 sublime.set_timeout(lambda: view.run_command("write_archived_package_content"), 0)
+                break
     return found
 
 
@@ -98,7 +135,6 @@ def open_package_file(pth):
             win.open_file(user_res)
     else:
         found = False
-        print(installed_res)
         if exists(installed_res):
             found = open_package_file_zip(installed_res, zip_resource)
         if not found and exists(default_res):
@@ -349,4 +385,3 @@ class TogglePackageSearchFindAllModeCommand(sublime_plugin.ApplicationCommand):
 def plugin_loaded():
     global FIND_ALL_MODE
     FIND_ALL_MODE = sublime.load_settings("package_file_search.sublime-settings").get("find_all_by_default", False)
-    # print(get_package_contents("Packages/BracketHighlighter"))

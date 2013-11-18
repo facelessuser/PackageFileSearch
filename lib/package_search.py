@@ -42,7 +42,7 @@ def scan_for_packages(file_path, archives=False):
     return plugins
 
 
-def packagename(pth, normalize=True):
+def packagename(pth, normalize=False):
     """
     Get the package name from the path
     """

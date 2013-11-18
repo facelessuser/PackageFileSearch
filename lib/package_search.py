@@ -53,33 +53,33 @@ def packagename(pth, normalize=True):
     return name.lower() if sublime.platform() == "windows" and normalize else name
 
 
-def resolve_overrides(package_list, override_list):
-    """
-    Remove packages from the list that are being overridden
-    """
-    override_names = [packagename(x) for x in override_list[:]]
-    count = 0
-    offset = 0
-    for p in package_list[:]:
-        pkg_name = packagename(p)
-        for o in override_names:
-            if o == pkg_name:
-                del package_list[count - offset]
-                offset += 1
-                break
-        count += 1
+# def resolve_overrides(package_list, override_list):
+#     """
+#     Remove packages from the list that are being overridden
+#     """
+#     override_names = [packagename(x) for x in override_list[:]]
+#     count = 0
+#     offset = 0
+#     for p in package_list[:]:
+#         pkg_name = packagename(p)
+#         for o in override_names:
+#             if in_list(0, pkg_name):
+#                 del package_list[count - offset]
+#                 offset += 1
+#                 break
+#         count += 1
 
 
-def resolve_pkgs(defaults, installed, user):
-    """
-    Resolve which packages to return. Account for package override.
-    """
-    resolve_overrides(defaults, installed)
-    resolve_overrides(defaults, user)
-    resolve_overrides(installed, user)
+# def resolve_pkgs(defaults, installed, user):
+#     """
+#     Resolve which packages to return. Account for package override.
+#     """
+#     resolve_overrides(defaults, installed)
+#     resolve_overrides(defaults, user)
+#     resolve_overrides(installed, user)
 
 
-def get_packages_location(resolve_override=True):
+def get_packages_location():
     """
     Get all packages.  Optionally disable resolving override packages.
     """
@@ -89,8 +89,8 @@ def get_packages_location(resolve_override=True):
     default_pkgs = scan_for_packages(default_pth, archives=True)
     user_pkgs = scan_for_packages(user_pth)
 
-    if resolve_override:
-        resolve_pkgs(default_pkgs, installed_pkgs, user_pkgs)
+    # if resolve_override:
+    #     resolve_pkgs(default_pkgs, installed_pkgs, user_pkgs)
 
     return default_pkgs, installed_pkgs, user_pkgs
 
@@ -113,6 +113,21 @@ def get_folder_resources(folder_pkg, pkg_name, content_folders, content_files):
                 content_folders.append(base.replace(folder_pkg, "Packages/%s" % pkg_name, 1).replace("\\", "/") + "/")
 
 
+def in_list(x, l):
+    """
+    Find if x (string) is in l (list)
+    """
+    found = False
+    if sublime.platform() == "windows":
+        for item in l:
+            if item.lower() == x.lower():
+                found = True
+                break
+    else:
+        found = x in l
+    return found
+
+
 def get_zip_resources(zip_pkg, pkg_name, content_folders, content_files):
     """
     Get resources in archive that are not already in the lists
@@ -123,10 +138,12 @@ def get_zip_resources(zip_pkg, pkg_name, content_folders, content_files):
                 file_name = item.filename
                 if EXCLUDE_PATTERN.search(file_name) is None:
                     package_name = "Packages/%s/%s" % (pkg_name, file_name)
-                    if package_name.endswith('/') not in content_folders:
-                        content_folders.append(package_name)
+                    if package_name.endswith('/'):
+                        if not in_list(package_name, content_folders):
+                            content_folders.append(package_name)
                     elif not package_name.endswith('/'):
-                        content_files.append(package_name)
+                        if not in_list(package_name, content_files):
+                            content_files.append(package_name)
 
 
 def get_package_contents(pkg):
@@ -161,7 +178,7 @@ def get_packages():
     for pkg_type in [user_pkgs, installed_pkgs, default_pkgs]:
         for pkg in pkg_type:
             name = packagename(pkg)
-            if name not in pkgs:
+            if not in_list(name, pkgs):
                 pkgs.append(name)
 
     pkgs.sort()

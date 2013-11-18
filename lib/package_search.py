@@ -6,7 +6,7 @@ Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
 import sublime
 import re
 from os import walk, listdir
-from os.path import basename, dirname, isdir, join, normpath, splitext
+from os.path import basename, dirname, isdir, join, normpath, splitext, exists
 from fnmatch import fnmatch
 import zipfile
 
@@ -15,8 +15,12 @@ __all__ = [
     "scan_for_packages",
     "packagename",
     "get_packages",
+    "get_packages_location",
+    "get_package_contents",
     "PackageSearch"
 ]
+
+EXCLUDE_PATTERN = re.compile(r"(?:/|^)(?:[^/]*\.(?:pyc|pyo)|\.git|\.svn|\.hg|\.DS_Store)(?=$|/)")
 
 
 def sublime_package_paths(full_path=False):
@@ -75,7 +79,7 @@ def resolve_pkgs(defaults, installed, user):
     resolve_overrides(installed, user)
 
 
-def get_packages(resolve_override=True):
+def get_packages_location(resolve_override=True):
     """
     Get all packages.  Optionally disable resolving override packages.
     """
@@ -89,6 +93,80 @@ def get_packages(resolve_override=True):
         resolve_pkgs(default_pkgs, installed_pkgs, user_pkgs)
 
     return default_pkgs, installed_pkgs, user_pkgs
+
+
+def get_folder_resources(folder_pkg, pkg_name, content_folders, content_files):
+    """
+    Get resources in folder
+    """
+    if exists(folder_pkg):
+        for base, dirs, files in walk(folder_pkg):
+            dir_objs = []
+            file_objs = []
+            [dirs.remove(d) for d in dirs[:] if EXCLUDE_PATTERN.search(d) is not None]
+            for f in files:
+                if EXCLUDE_PATTERN.search(f) is None:
+                    file_name = join(base, f).replace(folder_pkg, "Packages/%s" % pkg_name, 1).replace("\\", "/")
+                    file_objs.append(file_name)
+                    content_files.append(file_name)
+            if len(file_objs) == 0 and len(dirs) == 0:
+                content_folders.append(base.replace(folder_pkg, "Packages/%s" % pkg_name, 1).replace("\\", "/") + "/")
+
+
+def get_zip_resources(zip_pkg, pkg_name, content_folders, content_files):
+    """
+    Get resources in archive that are not already in the lists
+    """
+    if exists(zip_pkg):
+        with zipfile.ZipFile(zip_pkg, 'r') as z:
+            for item in z.infolist():
+                file_name = item.filename
+                if EXCLUDE_PATTERN.search(file_name) is None:
+                    package_name = "Packages/%s/%s" % (pkg_name, file_name)
+                    if package_name.endswith('/') not in content_folders:
+                        content_folders.append(package_name)
+                    elif not package_name.endswith('/'):
+                        content_files.append(package_name)
+
+
+def get_package_contents(pkg):
+    """
+    Get contents of package
+    """
+    m = re.match(r"^Packages/([^/]*)/?$", pkg)
+    assert(m is not None)
+    pkg = m.group(1)
+    installed_pth, default_pth, user_pth = sublime_package_paths()
+    content_files = []
+    content_folders = []
+
+    get_folder_resources(join(user_pth, pkg), pkg, content_folders, content_files)
+    get_zip_resources(join(installed_pth, "%s.sublime-package" % pkg), pkg, content_folders, content_files)
+    get_zip_resources(join(default_pth, "%s.sublime-package" % pkg), pkg, content_folders, content_files)
+
+    return content_folders + content_files
+
+
+def get_packages():
+    """
+    Get the package names
+    """
+    installed_pth, default_pth, user_pth = sublime_package_paths()
+
+    installed_pkgs = scan_for_packages(installed_pth, archives=True)
+    default_pkgs = scan_for_packages(default_pth, archives=True)
+    user_pkgs = scan_for_packages(user_pth)
+
+    pkgs = []
+    for pkg_type in [user_pkgs, installed_pkgs, default_pkgs]:
+        for pkg in pkg_type:
+            name = packagename(pkg)
+            if name not in pkgs:
+                pkgs.append(name)
+
+    pkgs.sort()
+
+    return pkgs
 
 
 class PackageSearch(object):
@@ -140,7 +218,6 @@ class PackageSearch(object):
         Search the plugin folders for archived plugins
         """
         st_packages = sublime_package_paths()
-        # self.get_zip_packages(settings, st_packages[2], "Packages", pattern, regex)
         self.get_zip_packages(settings, st_packages[0], "Installed", pattern, regex)
         self.get_zip_packages(settings, st_packages[1], "Default", pattern, regex)
 
@@ -169,8 +246,6 @@ class PackageSearch(object):
         """
         st_packages = sublime_package_paths()
         self.get_unzipped_packages(settings, st_packages[2], "Packages", pattern, regex)
-        # self.get_unzipped_packages(settings, st_packages[0], "Installed", pattern, regex)
-        # self.get_unzipped_packages(settings, st_packages[1], "Default", pattern, regex)
 
     ################
     # Search All

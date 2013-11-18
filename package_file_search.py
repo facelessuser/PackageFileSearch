@@ -37,6 +37,76 @@ def get_encoding(view):
     return ("utf_8", "UTF-8") if encoding in ["Undefined", "Hexidecimal"] else (encoding, orig)
 
 
+def open_package_file_zip(pth, resource):
+    found = False
+    win = sublime.active_window()
+    with zipfile.ZipFile(pth, 'r') as z:
+        for item in z.infolist():
+            if resource == item.filename:
+                found = True
+                text = z.read(z.getinfo(resource))
+                file_name = normpath(join(pth, resource))
+
+                # Unpack the file in a temporary location
+                d = tempfile.mkdtemp(prefix="pkgfs")
+                with open(join(d, basename(file_name)), "wb") as f:
+                    f.write(text)
+
+                # Open and then close the file in a view in order
+                # to let sublime guess encoding and syntax
+                view = win.open_file(f.name)
+                encoding, st_encoding = get_encoding(view)
+                win.focus_view(view)
+                win.run_command("close_file")
+                syntax = view.settings().get('syntax')
+                shutil.rmtree(d)
+
+                # When a file is opened from disk, you can't rename the
+                # the path location.  If you try and use new_file,
+                # you can give it a nice file path name, but the tab
+                # will be huge.  If you use open_file, with a bogus path,
+                # the view will be created with the desired filepath, and
+                # it will properly display the basename as the tab name,
+                # it will just report an issue reading the file in the console.
+                # Reopen a new view and configure it with the
+                # syntax and name and give the view a friendly name
+                # opposed to an ugly temp directory
+                view = win.open_file(file_name)
+                view.set_syntax_file(syntax)
+                view.set_encoding(st_encoding)
+                try:
+                    WriteArchivedPackageContentCommand.bfr = text.decode(encoding).replace('\r', '')
+                except:
+                    view.set_encoding("UTF-8")
+                    WriteArchivedPackageContentCommand.bfr = text.decode("utf-8").replace('\r', '')
+                sublime.set_timeout(lambda: view.run_command("write_archived_package_content"), 0)
+    return found
+
+
+def open_package_file(pth):
+    resource = pth.replace("\\", '/').replace("Packages/", "", 1)
+    parts = resource.split('/')
+    zip_pkg = "%s.sublime-package" % parts.pop(0)
+    zip_resource = '/'.join(parts)
+    installed, default, user = sublime_package_paths()
+    user_res = normpath(join(user, resource))
+    installed_res = join(installed, zip_pkg)
+    default_res = join(default, zip_pkg)
+    if exists(user_res):
+        win = sublime.active_window()
+        if win is not None:
+            win.open_file(user_res)
+    else:
+        found = False
+        print(installed_res)
+        if exists(installed_res):
+            print("find installed")
+            found = open_package_file_zip(installed_res, zip_resource)
+        if not found and exists(default_res):
+            print("find_default")
+            found = open_package_file_zip(default_res, zip_resource)
+
+
 class WriteArchivedPackageContentCommand(sublime_plugin.TextCommand):
     bfr = None
     def run(self, edit):
@@ -56,151 +126,57 @@ class PackageFileSearchNavCommand(sublime_plugin.WindowCommand):
     def folder_select(self, value, folder_items, cwd, package_folder):
         if value > -1:
             item = folder_items[value]
-            sublime.set_timeout(lambda: self.nav_folder(cwd, item, package_folder), 100)
+            sublime.set_timeout(lambda: self.nav_package(cwd, item, package_folder), 100)
 
-    def zip_select(self, value, folder_items, zippkg, cwd, package_folder):
-        if value > -1:
-            item = folder_items[value]
-            sublime.set_timeout(lambda: self.nav_zip(zippkg, cwd, item, package_folder), 100)
-
-    def nav_folder(self, cwd, child, package_folder):
+    def nav_package(self, cwd, child, package_folder):
         target = cwd
         if child is not None:
-            child = child[:-1] if child.endswith("/") else child
-            if child == ".." and dirname(cwd) == package_folder:
+            if target == package_folder and child == "..":
                 sublime.set_timeout(self.show_packages, 100)
                 return
             elif child == "..":
-                target = dirname(target)
+                target = dirname(target[:-1]) + '/'
             else:
                 target = join(target, child)
-        if isdir(target):
-            folders = []
-            files = []
-            for item in listdir(target):
-                if item in EXCLUDES:
-                    continue
-                if isdir(join(target, item)):
-                    folders.append(item + "/")
-                else:
-                    files.append(item)
-            folders.sort()
-            files.sort()
-            folder_items = [".."] + folders + files
-            self.window.show_quick_panel(
-                folder_items,
-                lambda x: self.folder_select(x, folder_items, target, package_folder)
-            )
-        else:
-            self.window.open_file(target)
-
-    def open_zip_file(self, z, zip_file, file_name):
-        text = z.read(z.getinfo(zip_file))
-
-        # Unpack the file in a temporary location
-        d = tempfile.mkdtemp(prefix="pkgfs")
-        with open(join(d, basename(file_name)), "wb") as f:
-            f.write(text)
-
-        # Open and then close the file in a view in order
-        # to let sublime guess encoding and syntax
-        view = self.window.open_file(f.name)
-        encoding, st_encoding = get_encoding(view)
-        self.window.focus_view(view)
-        self.window.run_command("close_file")
-        syntax = view.settings().get('syntax')
-        shutil.rmtree(d)
-
-        # When a file is opened from disk, you can't rename the
-        # the path location.  If you try and use new_file,
-        # you can give it a nice file path name, but the tab
-        # will be huge.  If you use open_file, with a bogus path,
-        # the view will be created with the desired filepath, and
-        # it will properly display the basename as the tab name,
-        # it will just report an issue reading the file in the console.
-        # Reopen a new view and configure it with the
-        # syntax and name and give the view a friendly name
-        # opposed to an ugly temp directory
-        view = self.window.open_file(file_name)
-        view.set_syntax_file(syntax)
-        view.set_encoding(st_encoding)
-        try:
-            WriteArchivedPackageContentCommand.bfr = text.decode(encoding).replace('\r', '')
-        except:
-            view.set_encoding("UTF-8")
-            WriteArchivedPackageContentCommand.bfr = text.decode("utf-8").replace('\r', '')
-        sublime.set_timeout(lambda: view.run_command("write_archived_package_content"), 0)
-
-    def nav_zip(self, zippkg, cwd, child, package_folder):
-        target = "" if cwd is None else cwd
-        if child is not None:
-            child = child[:-1] if child.endswith('/') else child
-            if child == ".." and cwd == "":
-                sublime.set_timeout(self.show_packages, 100)
-                return
-            elif child == "..":
-                target = dirname(target)
-            else:
-                target = join(target, child)
-        target.replace("\\", '/')
+        target = target.replace("\\", '/')
         folders = []
         files = []
-        with zipfile.ZipFile(zippkg, 'r') as z:
-            for item in z.infolist():
-                if target == item.filename:
-                    self.open_zip_file(z, item.filename, join(zippkg, normpath(item.filename)))
-                    return
-                if target != "" and not item.filename.startswith(target + '/'):
-                    continue
-                if target != "":
-                    parts = item.filename.replace(target + '/', '', 1).split('/')
-                else:
-                    parts = item.filename.split('/')
-                if parts[0] in EXCLUDES:
-                    continue
-                if parts[-1] == '':
-                    if parts[0] == "":
-                        continue
-                    entry = parts[0] + '/'
-                    if entry not in folders:
-                        folders.append(entry)
-                else:
-                    if len(parts) > 1:
-                        entry = parts[0] + '/'
-                        if entry not in folders:
-                            folders.append(parts[0] + '/')
-                    else:
-                        files.append(parts[0])
+        if not target.endswith('/'):
+            open_package_file(target)
+            return
+        for c in get_package_contents(package_folder):
+            if not c.startswith(target):
+                continue
+            parts = c.replace(target, "").split('/')
+            if parts[0] in EXCLUDES:
+                continue
+            if len(parts) > 1 and parts[0] + '/' not in folders:
+                folders.append(parts[0] + '/')
+            elif parts[0] not in files:
+                files.append(parts[0])
         folders.sort()
         files.sort()
         folder_items = [".."] + folders + files
         self.window.show_quick_panel(
             folder_items,
-            lambda x: self.zip_select(x, folder_items, zippkg, target, package_folder)
+            lambda x: self.folder_select(x, folder_items, target, package_folder)
         )
 
     def open_pkg(self, value):
         if value > -1:
-            location = self.packages[value][1]
-            if isdir(location):
-                sublime.set_timeout(lambda: self.nav_folder(location, None, dirname(location)), 100)
-            else:
-                sublime.set_timeout(lambda: self.nav_zip(location, None, None, dirname(location)), 100)
-
-    def run(self):
-        self.packages = []
-        for location in get_packages():
-            for pkg in location:
-                self.packages.append((packagename(pkg), pkg))
-        self.packages.sort()
-        self.show_packages()
+            pkg = self.packages[value]
+            sublime.set_timeout(lambda: self.nav_package("Packages/%s/" % pkg, None, "Packages/%s/" % pkg), 100)
 
     def show_packages(self):
         if len(self.packages):
             self.window.show_quick_panel(
-                [pkg[0] for pkg in self.packages],
+                self.packages,
                 self.open_pkg
             )
+
+    def run(self):
+        self.packages = get_packages()
+        self.show_packages()
 
 
 class _GetPackageFilesInputCommand(sublime_plugin.WindowCommand):
@@ -306,7 +282,7 @@ class PackageFileSearchExtractCommand(sublime_plugin.WindowCommand):
                 z.extractall(dest)
 
     def run(self):
-        defaults, installed, _ = get_packages()
+        defaults, installed, _ = get_packages_location()
         packages = defaults + installed
         if len(packages):
             self.window.show_quick_panel(
@@ -335,42 +311,7 @@ class PackageFileSearchCommand(_PackageSearchCommand):
                 break
 
         if file_name is not None:
-            with zipfile.ZipFile(zip_package, 'r') as z:
-                text = z.read(z.getinfo(zip_file))
-
-                # Unpack the file in a temporary location
-                d = tempfile.mkdtemp(prefix="pkgfs")
-                with open(join(d, basename(file_name)), "wb") as f:
-                    f.write(text)
-
-                # Open and then close the file in a view in order
-                # to let sublime guess encoding and syntax
-                view = self.window.open_file(f.name)
-                encoding, st_encoding = get_encoding(view)
-                self.window.focus_view(view)
-                self.window.run_command("close_file")
-                syntax = view.settings().get('syntax')
-                shutil.rmtree(d)
-
-                # When a file is opened from disk, you can't rename the
-                # the path location.  If you try and use new_file,
-                # you can give it a nice file path name, but the tab
-                # will be huge.  If you use open_file, with a bogus path,
-                # the view will be created with the desired filepath, and
-                # it will properly display the basename as the tab name,
-                # it will just report an issue reading the file in the console.
-                # Reopen a new view and configure it with the
-                # syntax and name and give the view a friendly name
-                # opposed to an ugly temp directory
-                view = self.window.open_file(file_name)
-                view.set_syntax_file(syntax)
-                view.set_encoding(st_encoding)
-                try:
-                    WriteArchivedPackageContentCommand.bfr = text.decode(encoding).replace('\r', '')
-                except:
-                    view.set_encoding("UTF-8")
-                    WriteArchivedPackageContentCommand.bfr = text.decode("utf-8").replace('\r', '')
-                sublime.set_timeout(lambda: view.run_command("write_archived_package_content"), 0)
+            open_package_file_zip(zip_package, zip_file)
 
     def process_file(self, value, settings):
         if value > -1:
@@ -410,3 +351,4 @@ class TogglePackageSearchFindAllModeCommand(sublime_plugin.ApplicationCommand):
 def plugin_loaded():
     global FIND_ALL_MODE
     FIND_ALL_MODE = sublime.load_settings("package_file_search.sublime-settings").get("find_all_by_default", False)
+    # print(get_package_contents("Packages/BracketHighlighter"))

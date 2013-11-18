@@ -100,10 +100,8 @@ def open_package_file(pth):
         found = False
         print(installed_res)
         if exists(installed_res):
-            print("find installed")
             found = open_package_file_zip(installed_res, zip_resource)
         if not found and exists(default_res):
-            print("find_default")
             found = open_package_file_zip(default_res, zip_resource)
 
 

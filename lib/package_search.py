@@ -53,32 +53,6 @@ def packagename(pth, normalize=False):
     return name.lower() if sublime.platform() == "windows" and normalize else name
 
 
-# def resolve_overrides(package_list, override_list):
-#     """
-#     Remove packages from the list that are being overridden
-#     """
-#     override_names = [packagename(x) for x in override_list[:]]
-#     count = 0
-#     offset = 0
-#     for p in package_list[:]:
-#         pkg_name = packagename(p)
-#         for o in override_names:
-#             if in_list(0, pkg_name):
-#                 del package_list[count - offset]
-#                 offset += 1
-#                 break
-#         count += 1
-
-
-# def resolve_pkgs(defaults, installed, user):
-#     """
-#     Resolve which packages to return. Account for package override.
-#     """
-#     resolve_overrides(defaults, installed)
-#     resolve_overrides(defaults, user)
-#     resolve_overrides(installed, user)
-
-
 def get_packages_location():
     """
     Get all packages.  Optionally disable resolving override packages.
@@ -88,9 +62,6 @@ def get_packages_location():
     installed_pkgs = scan_for_packages(installed_pth, archives=True)
     default_pkgs = scan_for_packages(default_pth, archives=True)
     user_pkgs = scan_for_packages(user_pth)
-
-    # if resolve_override:
-    #     resolve_pkgs(default_pkgs, installed_pkgs, user_pkgs)
 
     return default_pkgs, installed_pkgs, user_pkgs
 

@@ -6,8 +6,8 @@ Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
 
 import sublime
 import sublime_plugin
-from os.path import join, basename, exists, isdir, dirname, normpath
-from os import listdir, mkdir, chmod, rmdir, remove
+from os.path import join, basename, exists, dirname, normpath
+from os import mkdir, chmod, rmdir, remove
 import stat
 import re
 import zipfile
@@ -16,6 +16,7 @@ import shutil
 from .lib.package_search import *
 
 EXCLUDES = [".svn", ".hg", ".git", ".DS_Store"]
+
 
 def log(s):
     print("PackageFileSearch: %s" % s)
@@ -41,9 +42,8 @@ def get_encoding(view):
 
 
 def on_rm_error(func, path, exc_info):
-    excvalue = exc_info[1]
     if func in (rmdir, remove):
-        chmod(path, stat.S_IRWXU| stat.S_IRWXG| stat.S_IRWXO) # 0777
+        chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # 0777
         try:
             func(path)
         except:
@@ -72,6 +72,7 @@ def on_rm_error(func, path, exc_info):
                 raise
     else:
         raise
+
 
 def open_package_file_zip(pth, resource):
     found = False
@@ -143,6 +144,7 @@ def open_package_file(pth):
 
 class WriteArchivedPackageContentCommand(sublime_plugin.TextCommand):
     bfr = None
+
     def run(self, edit):
         cls = WriteArchivedPackageContentCommand
         if cls.bfr is not None:
@@ -220,7 +222,7 @@ class _GetPackageFilesInputCommand(sublime_plugin.WindowCommand):
         regex = False
         if pattern != "":
             m = re.match(r"^[ \t]*`(.*)`[ \t]*$", pattern)
-            if m != None:
+            if m is not None:
                 regex = True
                 pattern = m.group(1)
             self.window.run_command(
@@ -240,6 +242,7 @@ class _GetPackageFilesInputCommand(sublime_plugin.WindowCommand):
             None,
             None
         )
+
 
 class PackageFileSearchInputCommand(_GetPackageFilesInputCommand):
     find_mode = False

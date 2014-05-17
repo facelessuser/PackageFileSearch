@@ -57,7 +57,7 @@ def get_packages_location():
     """
     Get all packages.  Optionally disable resolving override packages.
     """
-    installed_pth, default_pth, user_pth= sublime_package_paths()
+    installed_pth, default_pth, user_pth = sublime_package_paths()
 
     installed_pkgs = scan_for_packages(installed_pth, archives=True)
     default_pkgs = scan_for_packages(default_pth, archives=True)
@@ -72,7 +72,6 @@ def get_folder_resources(folder_pkg, pkg_name, content_folders, content_files):
     """
     if exists(folder_pkg):
         for base, dirs, files in walk(folder_pkg):
-            dir_objs = []
             file_objs = []
             [dirs.remove(d) for d in dirs[:] if EXCLUDE_PATTERN.search(d) is not None]
             for f in files:
@@ -176,7 +175,7 @@ class PackageSearch(object):
         """
         for f in files:
             if regex:
-                if re.match(pattern, f[0], re.IGNORECASE) != None:
+                if re.match(pattern, f[0], re.IGNORECASE) is not None:
                     settings.append([f[0].replace(file_path, "").lstrip("\\").lstrip("/"), f[1]])
             else:
                 if fnmatch(f[0], pattern):
@@ -265,7 +264,7 @@ class PackageSearch(object):
         else:
             temp = sublime.find_resources("*")
             for t in temp:
-                if re.match(pattern, t, re.IGNORECASE) != None:
+                if re.match(pattern, t, re.IGNORECASE) is not None:
                     resources.append(t)
 
         self.window.show_quick_panel(

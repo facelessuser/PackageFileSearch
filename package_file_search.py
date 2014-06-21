@@ -188,7 +188,7 @@ class PackageFileSearchNavCommand(sublime_plugin.WindowCommand):
                 continue
             if len(parts) > 1 and parts[0] + '/' not in folders:
                 folders.append(parts[0] + '/')
-            elif parts[0] not in files:
+            elif len(parts) == 1 and parts[0] not in files:
                 files.append(parts[0])
         folders.sort()
         files.sort()

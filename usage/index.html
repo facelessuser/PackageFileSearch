@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>User Guide - PackageFileSearch Documentation</title>
+  
+
+  <link rel="shortcut icon" href="../img/favicon.ico">
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_custom.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script src="../js/theme.js"></script> 
+
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> PackageFileSearch Documentation</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        <ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="..">About PackageFileSearch</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../installation/">Installation</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">User Guide</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#user-guide">User Guide</a></li>
+                
+                    <li><a class="toctree-l4" href="#overview">Overview</a></li>
+                
+                    <li><a class="toctree-l4" href="#package-file-search-navigator">Package File Search: Navigator</a></li>
+                
+                    <li><a class="toctree-l4" href="#package-file-search-extract">Package File Search: Extract</a></li>
+                
+                    <li><a class="toctree-l4" href="#package-file-search-search-menu">Package File Search: Search Menu</a></li>
+                
+                    <li><a class="toctree-l4" href="#package-file-search-find-panel">Package File Search: Find Panel</a></li>
+                
+                    <li><a class="toctree-l4" href="#package-file-search-set-color-scheme-file">Package File Search: Set Color Scheme File</a></li>
+                
+                    <li><a class="toctree-l4" href="#package-file-search-toggle-find-all-mode">Package File Search: Toggle Find All Mode</a></li>
+                
+            
+            </ul>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../contributing/">Contributing &amp; Support</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../license/">License</a>
+        
+    </li>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">PackageFileSearch Documentation</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>User Guide</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        
+          <a href="https://github.com/facelessuser/PackageFileSearch" class="icon icon-github"> Edit on GitHub</a>
+        
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 class="doctitle" id="user-guide"><a name="user-content-user-guide" href="#user-guide" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>User Guide</h1>
+<p>Configuration and usage of PackageFileSearch.</p>
+<hr />
+<h2 id="overview"><a name="user-content-overview" href="#overview" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Overview</h2>
+<p>In order to use Package File Search, you can use one of the five commands:</p>
+<ul>
+<li>Package File Search: Navigator</li>
+<li>Package File Search: Extract</li>
+<li>Package File Search: Search Menu</li>
+<li>Package File Search: Find Panel</li>
+<li>Package File Search: Set Color Scheme File</li>
+</ul>
+<h2 id="package-file-search-navigator"><a name="user-content-package-file-search-navigator" href="#package-file-search-navigator" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Package File Search: Navigator</h2>
+<p>This is a command that allows you to navigate all the plugins.  It allows you to navigate their file system even if they are archived in a sublime-package zip.  If plugins have some parts in a zip, and some parts unpacked overriding parts in the zip, PackageFileSearch will show a composite of the two with the override file taking precedence.  Unarchived files will open in an editable view.  Archived files will open in a read only view; you cannot directly modify the zipped files.</p>
+<h2 id="package-file-search-extract"><a name="user-content-package-file-search-extract" href="#package-file-search-extract" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Package File Search: Extract</h2>
+<p>The extract command allows you to unpack an archived plugin into the <code>Packages</code> folder if it has not already been done.</p>
+<h2 id="package-file-search-search-menu"><a name="user-content-package-file-search-search-menu" href="#package-file-search-search-menu" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Package File Search: Search Menu</h2>
+<p>With this command, a menu of pre-defined searches will be displayed.  When one is selected, all of the packages will be searched based on the selected pre-defined search pattern.  This will search only the current active plugin files. If you toggle <code>Find All</code> mode via the <code>Package File Search: Toggle Find All Mode</code> command, it will search and find override files and the original file and even disabled plugins.  Duplicate results will be distinguished by their install location: <code>Default</code>, <code>Installed Packages</code>, and <code>Packages</code>.  When <code>Find All</code> mode is active, the command will be shown in the command palette as <code>Package File Search: Search Menu (Find All)</code>.</p>
+<p>You can add to the pre-defined list or change it completely in the <code>package_file_search.sublime-settings</code> file.  The setting name is <code>pattern_list</code> and it has 3 configurable parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>caption</td>
+<td>The desired name to show up in the menu.</td>
+</tr>
+<tr>
+<td>search</td>
+<td>The search settings to be used (<code>pattern</code> and <code>regex</code>).</td>
+</tr>
+<tr>
+<td>pattern</td>
+<td>The wild card or regex pattern to be used.</td>
+</tr>
+<tr>
+<td>regex</td>
+<td>Whether the pattern is a regex pattern or not.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="codehilite"><pre>    <span class="c1">// Default pre-set patterns</span>
+    <span class="s2">&quot;pattern_list&quot;</span><span class="o">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;caption&quot;</span><span class="o">:</span> <span class="s2">&quot;Color Schemes&quot;</span><span class="p">,</span>         <span class="s2">&quot;search&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;pattern&quot;</span><span class="o">:</span> <span class="s2">&quot;*.tmTheme&quot;</span><span class="p">,</span>          <span class="s2">&quot;regex&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">}},</span>
+        <span class="p">{</span><span class="s2">&quot;caption&quot;</span><span class="o">:</span> <span class="s2">&quot;Commands&quot;</span><span class="p">,</span>              <span class="s2">&quot;search&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;pattern&quot;</span><span class="o">:</span> <span class="s2">&quot;*.sublime-commands&quot;</span><span class="p">,</span> <span class="s2">&quot;regex&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">}},</span>
+        <span class="p">{</span><span class="s2">&quot;caption&quot;</span><span class="o">:</span> <span class="s2">&quot;Keymaps&quot;</span><span class="p">,</span>               <span class="s2">&quot;search&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;pattern&quot;</span><span class="o">:</span> <span class="s2">&quot;*.sublime-keymap&quot;</span><span class="p">,</span>   <span class="s2">&quot;regex&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">}},</span>
+        <span class="p">{</span><span class="s2">&quot;caption&quot;</span><span class="o">:</span> <span class="s2">&quot;Language Syntaxes&quot;</span><span class="p">,</span>     <span class="s2">&quot;search&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;pattern&quot;</span><span class="o">:</span> <span class="s2">&quot;*tmLanguage&quot;</span><span class="p">,</span>        <span class="s2">&quot;regex&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">}},</span>
+        <span class="p">{</span><span class="s2">&quot;caption&quot;</span><span class="o">:</span> <span class="s2">&quot;Macros&quot;</span><span class="p">,</span>                <span class="s2">&quot;search&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;pattern&quot;</span><span class="o">:</span> <span class="s2">&quot;*.sublime-macro&quot;</span><span class="p">,</span>    <span class="s2">&quot;regex&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">}},</span>
+        <span class="p">{</span><span class="s2">&quot;caption&quot;</span><span class="o">:</span> <span class="s2">&quot;Menus&quot;</span><span class="p">,</span>                 <span class="s2">&quot;search&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;pattern&quot;</span><span class="o">:</span> <span class="s2">&quot;*.sublime-menu&quot;</span><span class="p">,</span>     <span class="s2">&quot;regex&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">}},</span>
+        <span class="p">{</span><span class="s2">&quot;caption&quot;</span><span class="o">:</span> <span class="s2">&quot;Preferences&quot;</span><span class="p">,</span>           <span class="s2">&quot;search&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;pattern&quot;</span><span class="o">:</span> <span class="s2">&quot;*.tmPreferences&quot;</span><span class="p">,</span>    <span class="s2">&quot;regex&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">}},</span>
+        <span class="p">{</span><span class="s2">&quot;caption&quot;</span><span class="o">:</span> <span class="s2">&quot;Python Source Files&quot;</span><span class="p">,</span>   <span class="s2">&quot;search&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;pattern&quot;</span><span class="o">:</span> <span class="s2">&quot;*.py&quot;</span><span class="p">,</span>               <span class="s2">&quot;regex&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">}},</span>
+        <span class="p">{</span><span class="s2">&quot;caption&quot;</span><span class="o">:</span> <span class="s2">&quot;Readme Files&quot;</span><span class="p">,</span>          <span class="s2">&quot;search&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;pattern&quot;</span><span class="o">:</span> <span class="s2">&quot;*readme*&quot;</span><span class="p">,</span>           <span class="s2">&quot;regex&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">}},</span>
+        <span class="p">{</span><span class="s2">&quot;caption&quot;</span><span class="o">:</span> <span class="s2">&quot;Settings&quot;</span><span class="p">,</span>              <span class="s2">&quot;search&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;pattern&quot;</span><span class="o">:</span> <span class="s2">&quot;*.sublime-settings&quot;</span><span class="p">,</span> <span class="s2">&quot;regex&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">}},</span>
+        <span class="p">{</span><span class="s2">&quot;caption&quot;</span><span class="o">:</span> <span class="s2">&quot;Snippets&quot;</span><span class="p">,</span>              <span class="s2">&quot;search&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;pattern&quot;</span><span class="o">:</span> <span class="s2">&quot;*.sublime-snippet&quot;</span><span class="p">,</span>  <span class="s2">&quot;regex&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">}},</span>
+        <span class="p">{</span><span class="s2">&quot;caption&quot;</span><span class="o">:</span> <span class="s2">&quot;Themes&quot;</span><span class="p">,</span>                <span class="s2">&quot;search&quot;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;pattern&quot;</span><span class="o">:</span> <span class="s2">&quot;*.sublime-theme&quot;</span><span class="p">,</span>    <span class="s2">&quot;regex&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">}}</span>
+    <span class="p">],</span>
+</pre></div>
+
+
+<h2 id="package-file-search-find-panel"><a name="user-content-package-file-search-find-panel" href="#package-file-search-find-panel" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Package File Search: Find Panel</h2>
+<p>The Find Panel command allows for an on demand custom search pattern that can be given to search all active packages.  The pattern is entered into a Sublime input panel.  To search with traditional wild cards, just enter your pattern into the input field.  To use regex, surround the regex in back tics.  This will search only the current active plugin files, unless you toggle <code>Find All</code> mode via the <code>Package File Search: Toggle Find All Mode</code> command.  Then the command will search all plugin files regardless of whether they are the active plugin or being overridden.  This may give duplicate results, but they will be distinguished by their install location: <code>Default</code>, <code>Installed Packages</code>, and <code>Packages</code>.  When <code>Find All</code> mode is active, the command will be shown in the command palette as <code>Package File Search: Find Panel (Find All)</code>.</p>
+<h2 id="package-file-search-set-color-scheme-file"><a name="user-content-package-file-search-set-color-scheme-file" href="#package-file-search-set-color-scheme-file" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Package File Search: Set Color Scheme File</h2>
+<p>This a command to allow you to look at all color scheme files in active package files and to set it as the current color scheme file.  It will give you a live preview of the color scheme before you select it.  This will only show color schemes that are currently active (not being overridden).</p>
+<h2 id="package-file-search-toggle-find-all-mode"><a name="user-content-package-file-search-toggle-find-all-mode" href="#package-file-search-toggle-find-all-mode" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Package File Search: Toggle Find All Mode</h2>
+<p>The <code>Package File Search: Search Menu</code> and  <code>Package File Search: Find Panel</code> command by default search only the active plugin files (not the overridden plugin files).  But toggling <code>Find All</code> mode to <code>True</code> via this command will search all plugin files regardless of whether they are the active one or not.  This may give duplicate results, but they will be distinguished by their install location: <code>Default</code>, <code>Installed Packages</code>, and <code>Packages</code>.  When <code>Find All</code> mode is active, the commands will be shown in the command palette as <code>Package File Search: Search Menu (Find All)</code> and <code>Package File Search: Find Panel (Find All)</code> respectively.</p>
+<p>If you desire <code>Find All</code> mode to be <code>True</code> by default, you can set the desired behavior in the <code>package_file_search.sublime-settings</code> file.</p>
+<div class="codehilite"><pre>    <span class="c1">// &quot;find all&quot; means to look in every package regardless of whether</span>
+    <span class="c1">// it is being overridden.  This means you will see duplicate files if</span>
+    <span class="c1">// you have two instances of a plugin.</span>
+    <span class="s2">&quot;find_all_by_default&quot;</span><span class="o">:</span> <span class="kc">false</span>
+</pre></div>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../contributing/" class="btn btn-neutral float-right" title="Contributing &amp; Support"/>Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../installation/" class="btn btn-neutral" title="Installation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+    
+    Copyright &copy; 2013 - 2015 <a href="https://github.com/facelessuser">Isaac Muse</a>
+    
+    </p>
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../installation/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../contributing/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+
+</body>
+</html>

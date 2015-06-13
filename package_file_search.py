@@ -1,9 +1,9 @@
 """
-Package File Search
-Licensed under MIT
-Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
-"""
+Package File Search.
 
+Licensed under MIT
+Copyright (c) 2012 - 2015 Isaac Muse <isaacmuse@gmail.com>
+"""
 import sublime
 import sublime_plugin
 from os.path import join, basename, exists, dirname, normpath
@@ -13,16 +13,21 @@ import re
 import zipfile
 import tempfile
 import shutil
-from .lib.package_search import *
+from .lib import package_search as pfs
 
+FIND_ALL_MODE = False
 EXCLUDES = [".svn", ".hg", ".git", ".DS_Store"]
 
 
 def log(s):
+    """Log message."""
+
     print("PackageFileSearch: %s" % s)
 
 
 def get_encoding(view):
+    """Get view encoding."""
+
     mapping = [
         ("with BOM", ""),
         ("Windows", "cp"),
@@ -42,11 +47,13 @@ def get_encoding(view):
 
 
 def on_rm_error(func, path, exc_info):
+    """Handle windows error that occurs sometimes on remove."""
+
     if func in (rmdir, remove):
         chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # 0777
         try:
             func(path)
-        except:
+        except Exception:
             if sublime.platform() == "windows":
                 # Why are you being so stubborn windows?
                 # This situation only randomly occurs
@@ -75,6 +82,8 @@ def on_rm_error(func, path, exc_info):
 
 
 def open_package_file_zip(pth, resource):
+    """Open file in zip packages."""
+
     found = False
     win = sublime.active_window()
     with zipfile.ZipFile(pth, 'r') as z:
@@ -113,7 +122,7 @@ def open_package_file_zip(pth, resource):
                 view.set_encoding(st_encoding)
                 try:
                     WriteArchivedPackageContentCommand.bfr = text.decode(encoding).replace('\r', '')
-                except:
+                except Exception:
                     view.set_encoding("UTF-8")
                     WriteArchivedPackageContentCommand.bfr = text.decode("utf-8").replace('\r', '')
                 sublime.set_timeout(lambda: view.run_command("write_archived_package_content"), 0)
@@ -122,11 +131,13 @@ def open_package_file_zip(pth, resource):
 
 
 def open_package_file(pth):
+    """Open file in package."""
+
     resource = pth.replace("\\", '/').replace("Packages/", "", 1)
     parts = resource.split('/')
     zip_pkg = "%s.sublime-package" % parts.pop(0)
     zip_resource = '/'.join(parts)
-    installed, default, user = sublime_package_paths()
+    installed, default, user = pfs.sublime_package_paths()
     user_res = normpath(join(user, resource))
     installed_res = join(installed, zip_pkg)
     default_res = join(default, zip_pkg)
@@ -143,9 +154,13 @@ def open_package_file(pth):
 
 
 class WriteArchivedPackageContentCommand(sublime_plugin.TextCommand):
+
+    """Write archived package content."""
+
     bfr = None
 
     def run(self, edit):
+        """Run command."""
         cls = WriteArchivedPackageContentCommand
         if cls.bfr is not None:
             self.view.set_read_only(False)
@@ -159,12 +174,19 @@ class WriteArchivedPackageContentCommand(sublime_plugin.TextCommand):
 
 
 class PackageFileSearchNavCommand(sublime_plugin.WindowCommand):
+
+    """Naviage packages."""
+
     def folder_select(self, value, folder_items, cwd, package_folder):
+        """Handle folder selection."""
+
         if value > -1:
             item = folder_items[value]
             sublime.set_timeout(lambda: self.nav_package(cwd, item, package_folder), 100)
 
     def nav_package(self, cwd, child, package_folder):
+        """Navigate the package."""
+
         target = cwd
         if child is not None:
             if target == package_folder and child == "..":
@@ -180,7 +202,7 @@ class PackageFileSearchNavCommand(sublime_plugin.WindowCommand):
         if not target.endswith('/'):
             open_package_file(target)
             return
-        for c in get_package_contents(package_folder):
+        for c in pfs.get_package_contents(package_folder):
             if not c.startswith(target):
                 continue
             parts = c.replace(target, "").split('/')
@@ -199,11 +221,15 @@ class PackageFileSearchNavCommand(sublime_plugin.WindowCommand):
         )
 
     def open_pkg(self, value):
+        """Open package."""
+
         if value > -1:
             pkg = self.packages[value]
             sublime.set_timeout(lambda: self.nav_package("Packages/%s/" % pkg, None, "Packages/%s/" % pkg), 100)
 
     def show_packages(self):
+        """Show packages."""
+
         if len(self.packages):
             self.window.show_quick_panel(
                 self.packages,
@@ -211,14 +237,21 @@ class PackageFileSearchNavCommand(sublime_plugin.WindowCommand):
             )
 
     def run(self):
-        self.packages = get_packages()
+        """Run command."""
+
+        self.packages = pfs.get_packages()
         self.show_packages()
 
 
 class _GetPackageFilesInputCommand(sublime_plugin.WindowCommand):
+
+    """Get input package file pattern and then search with pattern."""
+
     find_mode = False
 
     def find_pattern(self, pattern, find_all=False):
+        """Find files that match pattern."""
+
         regex = False
         if pattern != "":
             m = re.match(r"^[ \t]*`(.*)`[ \t]*$", pattern)
@@ -235,6 +268,8 @@ class _GetPackageFilesInputCommand(sublime_plugin.WindowCommand):
             )
 
     def run(self):
+        """Prompt user for pattern."""
+
         self.window.show_input_panel(
             "File Pattern: ",
             "",
@@ -245,23 +280,38 @@ class _GetPackageFilesInputCommand(sublime_plugin.WindowCommand):
 
 
 class PackageFileSearchInputCommand(_GetPackageFilesInputCommand):
+
+    """Search for files with find all mode off."""
+
     find_mode = False
 
     def is_enabled(self):
+        """Check if package is enabled."""
+
         return not FIND_ALL_MODE
 
 
 class PackageFileSearchAllInputCommand(_GetPackageFilesInputCommand):
+
+    """Search for files with find all mode on."""
+
     find_mode = True
 
     def is_enabled(self):
+        """Check if package is enabled."""
+
         return FIND_ALL_MODE
 
 
 class _GetPackageFilesMenuCommand(sublime_plugin.WindowCommand):
+
+    """Base class for searching for files via the quick panel menu."""
+
     find_mode = False
 
     def find_files(self, value, patterns, find_all):
+        """Search using the selected pattern."""
+
         if value > -1:
             pat = patterns[value]
             sublime.set_timeout(
@@ -277,6 +327,8 @@ class _GetPackageFilesMenuCommand(sublime_plugin.WindowCommand):
             )
 
     def run(self, pattern_list=None):
+        """Run command."""
+
         patterns = []
         if pattern_list is None:
             pattern_list = sublime.load_settings("package_file_search.sublime-settings").get("pattern_list", [])
@@ -294,24 +346,39 @@ class _GetPackageFilesMenuCommand(sublime_plugin.WindowCommand):
 
 
 class PackageFileSearchMenuCommand(_GetPackageFilesMenuCommand):
+
+    """Search via quick panel menu with find all mode off."""
+
     find_mode = False
 
     def is_enabled(self):
+        """Check if command is enabled."""
+
         return not FIND_ALL_MODE
 
 
 class PackageFileSearchAllMenuCommand(_GetPackageFilesMenuCommand):
+
+    """Search via quick panel menu with find all mode on."""
+
     find_mode = True
 
     def is_enabled(self):
+        """Check if command is enabled."""
+
         return FIND_ALL_MODE
 
 
 class PackageFileSearchExtractCommand(sublime_plugin.WindowCommand):
+
+    """Extract zipped package."""
+
     def extract(self, value, packages):
+        """Extract files from the zip file."""
+
         if value > -1:
             pkg = packages[value]
-            name = packagename(pkg)
+            name = pfs.packagename(pkg)
             dest = join(sublime.packages_path(), name)
             if not exists(dest):
                 mkdir(dest)
@@ -319,26 +386,38 @@ class PackageFileSearchExtractCommand(sublime_plugin.WindowCommand):
                 z.extractall(dest)
 
     def run(self):
-        defaults, installed, _ = get_packages_location()
+        """Run command."""
+
+        defaults, installed, _ = pfs.get_packages_location()
         packages = defaults + installed
         if len(packages):
             self.window.show_quick_panel(
-                [packagename(pkg) for pkg in packages],
+                [pfs.packagename(pkg) for pkg in packages],
                 lambda x: self.extract(x, packages)
             )
 
 
-class _PackageSearchCommand(sublime_plugin.WindowCommand, PackageSearch):
+class _PackageSearchCommand(sublime_plugin.WindowCommand, pfs.PackageSearch):
+
+    """Package search base command."""
+
     def run(self, **kwargs):
+        """Run command."""
+
         self.search(**kwargs)
 
 
 class PackageFileSearchCommand(_PackageSearchCommand):
+
+    """Search packages with file pattern."""
+
     def open_zip_file(self, fn):
+        """Open zip file."""
+
         file_name = None
         zip_package = None
         zip_file = None
-        for zp in sublime_package_paths():
+        for zp in pfs.sublime_package_paths():
             items = fn.replace('\\', '/').split('/')
             zip_package = items.pop(0)
             zip_file = '/'.join(items)
@@ -351,6 +430,8 @@ class PackageFileSearchCommand(_PackageSearchCommand):
             open_package_file_zip(zip_package, zip_file)
 
     def process_file(self, value, settings):
+        """Process the file."""
+
         if value > -1:
             if self.find_all:
                 if value >= self.zipped_idx:
@@ -362,11 +443,18 @@ class PackageFileSearchCommand(_PackageSearchCommand):
 
 
 class PackageFileSearchColorSchemeCommand(_PackageSearchCommand):
+
+    """Package search command which previews color schemes."""
+
     def on_select(self, value, settings):
+        """Show preview when color scheme is highlighted."""
+
         if value != -1:
             sublime.load_settings("Preferences.sublime-settings").set("color_scheme", settings[value])
 
     def process_file(self, value, settings):
+        """Process the file by setting the color scheme as the active one."""
+
         if value != -1:
             sublime.load_settings("Preferences.sublime-settings").set("color_scheme", settings[value])
         else:
@@ -374,17 +462,26 @@ class PackageFileSearchColorSchemeCommand(_PackageSearchCommand):
                 sublime.load_settings("Preferences.sublime-settings").set("color_scheme", self.current_color_scheme)
 
     def pre_process(self, **kwargs):
+        """Save current color scheme before previewing."""
+
         self.current_color_scheme = sublime.load_settings("Preferences.sublime-settings").get("color_scheme")
         return {"pattern": "*.tmTheme"}
 
 
 class TogglePackageSearchFindAllModeCommand(sublime_plugin.ApplicationCommand):
+
+    """Toggle find all mode."""
+
     def run(self):
+        """Run command."""
+
         global FIND_ALL_MODE
         FIND_ALL_MODE = False if FIND_ALL_MODE else True
         sublime.status_message("Package File Search: Find All = %s" % str(FIND_ALL_MODE))
 
 
 def plugin_loaded():
+    """Load plugin."""
+
     global FIND_ALL_MODE
     FIND_ALL_MODE = sublime.load_settings("package_file_search.sublime-settings").get("find_all_by_default", False)

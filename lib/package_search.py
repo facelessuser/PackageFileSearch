@@ -1,5 +1,6 @@
 """
-Submlime Text Package File Search
+Submlime Text Package File Search.
+
 Licensed under MIT
 Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
 """
@@ -10,7 +11,7 @@ from os.path import basename, dirname, isdir, join, normpath, splitext, exists
 from fnmatch import fnmatch
 import zipfile
 
-__all__ = [
+__all__ = (
     "sublime_package_paths",
     "scan_for_packages",
     "packagename",
@@ -18,22 +19,24 @@ __all__ = [
     "get_packages_location",
     "get_package_contents",
     "PackageSearch"
-]
+)
 
 EXCLUDE_PATTERN = re.compile(r"(?:/|^)(?:[^/]*\.(?:pyc|pyo)|\.git|\.svn|\.hg|\.DS_Store)(?=$|/)")
 
 
-def sublime_package_paths(full_path=False):
-    """
-    Get all the locations where plugins live
-    """
-    return [sublime.installed_packages_path(), join(dirname(sublime.executable_path()), "Packages"), sublime.packages_path()]
+def sublime_package_paths():
+    """Get all the locations where plugins live."""
+
+    return [
+        sublime.installed_packages_path(),
+        join(dirname(sublime.executable_path()), "Packages"),
+        sublime.packages_path()
+    ]
 
 
 def scan_for_packages(file_path, archives=False):
-    """
-    Look for zipped and unzipped plugins.
-    """
+    """Look for zipped and unzipped plugins."""
+
     if archives:
         plugins = [join(file_path, item) for item in listdir(file_path) if fnmatch(item, "*.sublime-package")]
     else:
@@ -43,9 +46,8 @@ def scan_for_packages(file_path, archives=False):
 
 
 def packagename(pth, normalize=False):
-    """
-    Get the package name from the path
-    """
+    """Get the package name from the path."""
+
     if isdir(pth):
         name = basename(pth)
     else:
@@ -54,9 +56,8 @@ def packagename(pth, normalize=False):
 
 
 def get_packages_location():
-    """
-    Get all packages.  Optionally disable resolving override packages.
-    """
+    """Get all packages.  Optionally disable resolving override packages."""
+
     installed_pth, default_pth, user_pth = sublime_package_paths()
 
     installed_pkgs = scan_for_packages(installed_pth, archives=True)
@@ -67,13 +68,14 @@ def get_packages_location():
 
 
 def get_folder_resources(folder_pkg, pkg_name, content_folders, content_files):
-    """
-    Get resources in folder
-    """
+    """Get resources in folder."""
+
     if exists(folder_pkg):
         for base, dirs, files in walk(folder_pkg):
             file_objs = []
-            [dirs.remove(d) for d in dirs[:] if EXCLUDE_PATTERN.search(d) is not None]
+            for d in dirs[:]:
+                if EXCLUDE_PATTERN.search(d) is not None:
+                    dirs.remove(d)
             for f in files:
                 if EXCLUDE_PATTERN.search(f) is None:
                     file_name = join(base, f).replace(folder_pkg, "Packages/%s" % pkg_name, 1).replace("\\", "/")
@@ -84,9 +86,8 @@ def get_folder_resources(folder_pkg, pkg_name, content_folders, content_files):
 
 
 def in_list(x, l):
-    """
-    Find if x (string) is in l (list)
-    """
+    """Find if x (string) is in l (list)."""
+
     found = False
     if sublime.platform() == "windows":
         for item in l:
@@ -99,9 +100,8 @@ def in_list(x, l):
 
 
 def get_zip_resources(zip_pkg, pkg_name, content_folders, content_files):
-    """
-    Get resources in archive that are not already in the lists
-    """
+    """Get resources in archive that are not already in the lists."""
+
     if exists(zip_pkg):
         with zipfile.ZipFile(zip_pkg, 'r') as z:
             for item in z.infolist():
@@ -117,9 +117,8 @@ def get_zip_resources(zip_pkg, pkg_name, content_folders, content_files):
 
 
 def get_package_contents(pkg):
-    """
-    Get contents of package
-    """
+    """Get contents of package."""
+
     m = re.match(r"^Packages/([^/]*)/?$", pkg)
     assert(m is not None)
     pkg = m.group(1)
@@ -135,9 +134,8 @@ def get_package_contents(pkg):
 
 
 def get_packages():
-    """
-    Get the package names
-    """
+    """Get the package names."""
+
     installed_pth, default_pth, user_pth = sublime_package_paths()
 
     installed_pkgs = scan_for_packages(installed_pth, archives=True)
@@ -157,22 +155,26 @@ def get_packages():
 
 
 class PackageSearch(object):
+
+    """Search packages."""
+
     def pre_process(self, **kwargs):
+        """Preprocess event."""
+
         return kwargs
 
     def on_select(self, value, settings):
-        pass
+        """On select event."""
 
     def process_file(self, value, settings):
-        pass
+        """Handle processing the file."""
 
     ################
     # Qualify Files
     ################
     def find_files(self, files, file_path, pattern, settings, regex):
-        """
-        Find the file that matches the pattern
-        """
+        """Find the file that matches the pattern."""
+
         for f in files:
             if regex:
                 if re.match(pattern, f[0], re.IGNORECASE) is not None:
@@ -185,25 +187,24 @@ class PackageSearch(object):
     # Zipped
     ################
     def walk_zip(self, settings, plugin, pattern, regex):
-        """
-        Walk the archived files within the plugin
-        """
+        """Walk the archived files within the plugin."""
+
         with zipfile.ZipFile(plugin[0], 'r') as z:
             zipped = [(join(basename(plugin[0]), normpath(fn)), plugin[1]) for fn in sorted(z.namelist())]
             self.find_files(zipped, "", pattern, settings, regex)
 
     def get_zip_packages(self, settings, file_path, package_type, pattern, regex=False):
-        """
-        Get all the archived plugins in the plugin folder
-        """
-        plugins = [(join(file_path, item), package_type) for item in listdir(file_path) if fnmatch(item, "*.sublime-package")]
+        """Get all the archived plugins in the plugin folder."""
+
+        plugins = [
+            (join(file_path, item), package_type) for item in listdir(file_path) if fnmatch(item, "*.sublime-package")
+        ]
         for plugin in plugins:
             self.walk_zip(settings, plugin, pattern.strip(), regex)
 
     def search_zipped_files(self, settings, pattern, regex):
-        """
-        Search the plugin folders for archived plugins
-        """
+        """Search the plugin folders for archived plugins."""
+
         st_packages = sublime_package_paths()
         self.get_zip_packages(settings, st_packages[0], "Installed", pattern, regex)
         self.get_zip_packages(settings, st_packages[1], "Default", pattern, regex)
@@ -212,25 +213,22 @@ class PackageSearch(object):
     # Unzipped
     ################
     def walk(self, settings, file_path, plugin, package_type, pattern, regex=False):
-        """
-        Walk the files within the plugin
-        """
+        """Walk the files within the plugin."""
+
         for base, dirs, files in walk(plugin):
             files = [(join(base, f), package_type) for f in files]
             self.find_files(files, file_path, pattern, settings, regex)
 
     def get_unzipped_packages(self, settings, file_path, package_type, pattern, regex=False):
-        """
-        Get all of the plugins in the plugin folder
-        """
+        """Get all of the plugins in the plugin folder."""
+
         plugins = [join(file_path, item) for item in listdir(file_path) if isdir(join(file_path, item))]
         for plugin in plugins:
             self.walk(settings, file_path, plugin, package_type, pattern.strip(), regex)
 
     def search_unzipped_files(self, settings, pattern, regex):
-        """
-        Search the plugin folders for unzipped packages
-        """
+        """Search the plugin folders for unzipped packages."""
+
         st_packages = sublime_package_paths()
         self.get_unzipped_packages(settings, st_packages[2], "Packages", pattern, regex)
 
@@ -238,9 +236,8 @@ class PackageSearch(object):
     # Search All
     ################
     def find_raw(self, pattern, regex=False):
-        """
-        Search all packages regardless of whether it is being overridden
-        """
+        """Search all packages regardless of whether it is being overridden."""
+
         settings = []
         self.search_unzipped_files(settings, pattern, regex)
         self.zipped_idx = len(settings)
@@ -255,9 +252,8 @@ class PackageSearch(object):
     # Search Override
     ################
     def find(self, pattern, regex):
-        """
-        Search just the active packages.  Not the ones that have been overridden
-        """
+        """Search just the active packages.  Not the ones that have been overridden."""
+
         resources = []
         if not regex:
             resources = sublime.find_resources(pattern)
@@ -276,9 +272,8 @@ class PackageSearch(object):
         )
 
     def search(self, **kwargs):
-        """
-        Search packages
-        """
+        """Search packages."""
+
         kwargs = self.pre_process(**kwargs)
         pattern = kwargs.get("pattern", None)
         regex = kwargs.get("regex", False)

@@ -154,7 +154,6 @@ def open_package_file(pth):
 
 
 class WriteArchivedPackageContentCommand(sublime_plugin.TextCommand):
-
     """Write archived package content."""
 
     bfr = None
@@ -174,7 +173,6 @@ class WriteArchivedPackageContentCommand(sublime_plugin.TextCommand):
 
 
 class PackageFileSearchNavCommand(sublime_plugin.WindowCommand):
-
     """Naviage packages."""
 
     def folder_select(self, value, folder_items, cwd, package_folder):
@@ -244,7 +242,6 @@ class PackageFileSearchNavCommand(sublime_plugin.WindowCommand):
 
 
 class _GetPackageFilesInputCommand(sublime_plugin.WindowCommand):
-
     """Get input package file pattern and then search with pattern."""
 
     find_mode = False
@@ -280,7 +277,6 @@ class _GetPackageFilesInputCommand(sublime_plugin.WindowCommand):
 
 
 class PackageFileSearchInputCommand(_GetPackageFilesInputCommand):
-
     """Search for files with find all mode off."""
 
     find_mode = False
@@ -292,7 +288,6 @@ class PackageFileSearchInputCommand(_GetPackageFilesInputCommand):
 
 
 class PackageFileSearchAllInputCommand(_GetPackageFilesInputCommand):
-
     """Search for files with find all mode on."""
 
     find_mode = True
@@ -304,7 +299,6 @@ class PackageFileSearchAllInputCommand(_GetPackageFilesInputCommand):
 
 
 class _GetPackageFilesMenuCommand(sublime_plugin.WindowCommand):
-
     """Base class for searching for files via the quick panel menu."""
 
     find_mode = False
@@ -346,7 +340,6 @@ class _GetPackageFilesMenuCommand(sublime_plugin.WindowCommand):
 
 
 class PackageFileSearchMenuCommand(_GetPackageFilesMenuCommand):
-
     """Search via quick panel menu with find all mode off."""
 
     find_mode = False
@@ -358,7 +351,6 @@ class PackageFileSearchMenuCommand(_GetPackageFilesMenuCommand):
 
 
 class PackageFileSearchAllMenuCommand(_GetPackageFilesMenuCommand):
-
     """Search via quick panel menu with find all mode on."""
 
     find_mode = True
@@ -370,7 +362,6 @@ class PackageFileSearchAllMenuCommand(_GetPackageFilesMenuCommand):
 
 
 class PackageFileSearchExtractCommand(sublime_plugin.WindowCommand):
-
     """Extract zipped package."""
 
     def extract(self, value, packages):
@@ -398,7 +389,6 @@ class PackageFileSearchExtractCommand(sublime_plugin.WindowCommand):
 
 
 class _PackageSearchCommand(sublime_plugin.WindowCommand, pfs.PackageSearch):
-
     """Package search base command."""
 
     def run(self, **kwargs):
@@ -408,7 +398,6 @@ class _PackageSearchCommand(sublime_plugin.WindowCommand, pfs.PackageSearch):
 
 
 class PackageFileSearchCommand(_PackageSearchCommand):
-
     """Search packages with file pattern."""
 
     def open_zip_file(self, fn):
@@ -443,7 +432,6 @@ class PackageFileSearchCommand(_PackageSearchCommand):
 
 
 class PackageFileSearchColorSchemeCommand(_PackageSearchCommand):
-
     """Package search command which previews color schemes."""
 
     def on_select(self, value, settings):
@@ -469,7 +457,6 @@ class PackageFileSearchColorSchemeCommand(_PackageSearchCommand):
 
 
 class TogglePackageSearchFindAllModeCommand(sublime_plugin.ApplicationCommand):
-
     """Toggle find all mode."""
 
     def run(self):
